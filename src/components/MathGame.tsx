@@ -1007,7 +1007,7 @@ function GameScreen({
         {/* Feedback message */}
         {isCorrect && (
           <div className="text-center mt-3 text-green-600 font-bold text-xl animate-bounce-in">
-            {theme.celebrationLine.split('!')[0]}! 🎉
+            {theme.shortFeedback} 🎉
           </div>
         )}
         {isWrong && (
@@ -1428,95 +1428,99 @@ export default function MathGame() {
       // ── Adaptive analysis on final 10 of session ──────────
       const attempts = sessionAttemptsRef.current
       const final10 = attempts.slice(-10)
-      let newOffset: number | null = null
+      // D3: typed sentinel instead of `as any`
+      type OffsetDirection = 'up' | 'down' | null
+      let offsetDirection: OffsetDirection = null
       let adaptiveBanner = false
 
       if (final10.length >= 10) {
         const accuracy = final10.filter(a => a.correct).length / 10
         const avgTime = final10.reduce((s, a) => s + a.responseTimeMs, 0) / 10
-
-        // We'll compute newOffset inside the profile updater to get current value
         const hitHighBar = accuracy > 0.95 && avgTime < 3000
         const hitLowBar  = accuracy < 0.70
 
         if (hitHighBar) {
-          newOffset = 'up' as any    // sentinel — resolved below
+          offsetDirection = 'up'
           if (!mastered) adaptiveBanner = true
         } else if (hitLowBar) {
-          newOffset = 'down' as any  // sentinel — resolved below
+          offsetDirection = 'down'
         }
       }
 
-      // ── Snapshot current profile for computation ──────────
-      const profilesSnap = profiles
-      const prof = profilesSnap.find(p => p.profileId === activeProfileId) ?? profilesSnap[0]
-      if (!prof) return
+      // D2: All profile reads + writes happen inside the functional updater
+      // so they always operate on the latest state, never a stale snapshot.
+      // collectedNewAchIds is written synchronously by the updater before
+      // React schedules a re-render, making it safe to read immediately after.
+      let collectedNewAchIds: string[] = []
 
-      const currentAdaptiveOffset = prof.adaptiveState?.[level.id]?.maxOperandOffset ?? 0
-      let resolvedOffset = currentAdaptiveOffset
-      if (newOffset === ('up' as any)) {
-        resolvedOffset = Math.min(currentAdaptiveOffset + 1, 3)
-      } else if (newOffset === ('down' as any)) {
-        resolvedOffset = Math.max(currentAdaptiveOffset - 1, -2)
-      }
-
-      // ── Build updated profile ──────────────────────────────
-      const existing: LevelProgress = prof.levelProgress[level.id] ?? {
-        bestScore: 0,
-        totalAttempts: 0,
-        totalCorrect: 0,
-        completed: false,
-      }
-      const newProg: LevelProgress = {
-        bestScore: Math.max(existing.bestScore, finalCorrect),
-        totalAttempts: existing.totalAttempts + total,
-        totalCorrect: existing.totalCorrect + finalCorrect,
-        completed: existing.completed || mastered,
-        completedAt: existing.completed
-          ? existing.completedAt
-          : mastered ? new Date().toISOString() : undefined,
-      }
-
-      const newHighest = mastered
-        ? Math.max(prof.highestUnlockedLevel, level.id + 1)
-        : prof.highestUnlockedLevel
-
-      let updated: ProfileSave = {
-        ...prof,
-        totalStars: prof.totalStars + starsEarned,
-        totalSessionsPlayed: prof.totalSessionsPlayed + 1,
-        totalProblemsAnswered: prof.totalProblemsAnswered + total,
-        totalCorrectAnswers: prof.totalCorrectAnswers + finalCorrect,
-        highestUnlockedLevel: newHighest,
-        levelProgress: { ...prof.levelProgress, [level.id]: newProg },
-        adaptiveState: {
-          ...prof.adaptiveState,
-          [level.id]: {
-            maxOperandOffset: resolvedOffset,
-            lastUpdated: new Date().toISOString(),
-          },
-        },
-      }
-
-      // ── Achievements ───────────────────────────────────────
-      const prevHadPerfect = prof.achievements.includes('perfect_session')
-      const newAchIds: string[] = []
-
-      if (isPerfect && !prevHadPerfect) {
-        updated = { ...updated, achievements: [...updated.achievements, 'perfect_session'] }
-        newAchIds.push('perfect_session')
-      }
-
-      const autoAchIds = checkNewAchievements(updated)
-      if (autoAchIds.length > 0) {
-        updated = { ...updated, achievements: [...updated.achievements, ...autoAchIds] }
-        newAchIds.push(...autoAchIds)
-      }
-
-      // ── Apply update ───────────────────────────────────────
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.profileId === activeProfileId)
         if (idx === -1) return prev
+        const prof = prev[idx]  // always the current, unambiguous profile
+
+        const currentAdaptiveOffset = prof.adaptiveState?.[level.id]?.maxOperandOffset ?? 0
+        const resolvedOffset =
+          offsetDirection === 'up'
+            ? Math.min(currentAdaptiveOffset + 1, 3)
+            : offsetDirection === 'down'
+              ? Math.max(currentAdaptiveOffset - 1, -2)
+              : currentAdaptiveOffset
+
+        // ── Build updated profile ──────────────────────────────
+        const existing: LevelProgress = prof.levelProgress[level.id] ?? {
+          bestScore: 0,
+          totalAttempts: 0,
+          totalCorrect: 0,
+          completed: false,
+        }
+        const newProg: LevelProgress = {
+          bestScore: Math.max(existing.bestScore, finalCorrect),
+          totalAttempts: existing.totalAttempts + total,
+          totalCorrect: existing.totalCorrect + finalCorrect,
+          completed: existing.completed || mastered,
+          completedAt: existing.completed
+            ? existing.completedAt
+            : mastered ? new Date().toISOString() : undefined,
+        }
+
+        const newHighest = mastered
+          ? Math.max(prof.highestUnlockedLevel, level.id + 1)
+          : prof.highestUnlockedLevel
+
+        let updated: ProfileSave = {
+          ...prof,
+          totalStars: prof.totalStars + starsEarned,
+          totalSessionsPlayed: prof.totalSessionsPlayed + 1,
+          totalProblemsAnswered: prof.totalProblemsAnswered + total,
+          totalCorrectAnswers: prof.totalCorrectAnswers + finalCorrect,
+          highestUnlockedLevel: newHighest,
+          levelProgress: { ...prof.levelProgress, [level.id]: newProg },
+          adaptiveState: {
+            ...prof.adaptiveState,
+            [level.id]: {
+              maxOperandOffset: resolvedOffset,
+              lastUpdated: new Date().toISOString(),
+            },
+          },
+        }
+
+        // ── Achievements ───────────────────────────────────────
+        const prevHadPerfect = prof.achievements.includes('perfect_session')
+        const newAchIds: string[] = []
+
+        if (isPerfect && !prevHadPerfect) {
+          updated = { ...updated, achievements: [...updated.achievements, 'perfect_session'] }
+          newAchIds.push('perfect_session')
+        }
+
+        const autoAchIds = checkNewAchievements(updated)
+        if (autoAchIds.length > 0) {
+          updated = { ...updated, achievements: [...updated.achievements, ...autoAchIds] }
+          newAchIds.push(...autoAchIds)
+        }
+
+        collectedNewAchIds = newAchIds  // capture for post-updater side effects
+
         const next = [...prev]
         next[idx] = updated
         saveProfiles(next)
@@ -1524,8 +1528,8 @@ export default function MathGame() {
       })
 
       // ── Queue achievement toasts ───────────────────────────
-      if (newAchIds.length > 0) {
-        const toasts = newAchIds
+      if (collectedNewAchIds.length > 0) {
+        const toasts = collectedNewAchIds
           .map(id => ALL_ACHIEVEMENTS.find(a => a.id === id))
           .filter((a): a is Achievement => !!a)
         setToastQueue(q => [...q, ...toasts])
@@ -1539,14 +1543,14 @@ export default function MathGame() {
         mastered,
         isPerfect,
         starsEarned,
-        newAchievements: newAchIds,
+        newAchievements: collectedNewAchIds,
         adaptiveBanner,
       }
       setSessionResult(result)
       setScreen('session-complete')
       if (mastered) playLevelCompleteSound()
     },
-    [profiles, activeProfileId]
+    [activeProfileId]  // D2: `profiles` removed — updater reads fresh prev instead
   )
 
   // ── Keyboard support ──────────────────────────────────────

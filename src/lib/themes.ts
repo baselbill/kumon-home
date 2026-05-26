@@ -10,6 +10,8 @@ export interface Theme {
   plural: string           // "dinosaurs" — for narration templates
   noun: string             // "dinosaur" — singular
   celebrationLine: string  // shown on session-complete and all-done screens
+  /** Short inline feedback shown after a correct answer in the game screen */
+  shortFeedback: string
   soundStyle: 'roar' | 'laser' | 'splash' | 'chime' | 'pop'
 }
 
@@ -22,6 +24,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'dinosaurs',
     noun: 'dinosaur',
     celebrationLine: 'Your dinosaurs are SO proud! 🦕',
+    shortFeedback: 'RAWR!',
     soundStyle: 'roar',
   },
   {
@@ -32,6 +35,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'stars',
     noun: 'star',
     celebrationLine: "You're a star! 🚀",
+    shortFeedback: 'Zoom!',
     soundStyle: 'laser',
   },
   {
@@ -42,6 +46,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'fish',
     noun: 'fish',
     celebrationLine: 'Splashing through math! 🐬',
+    shortFeedback: 'Splash!',
     soundStyle: 'splash',
   },
   {
@@ -52,6 +57,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'bananas',
     noun: 'banana',
     celebrationLine: 'Monkey math genius! 🐒',
+    shortFeedback: 'Bananas!',
     soundStyle: 'roar',
   },
   {
@@ -62,6 +68,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'sparkles',
     noun: 'sparkle',
     celebrationLine: 'Pure magic! 🦄',
+    shortFeedback: 'Magic!',
     soundStyle: 'chime',
   },
   {
@@ -72,6 +79,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'gears',
     noun: 'gear',
     celebrationLine: 'System: AMAZING! 🤖',
+    shortFeedback: 'BEEP BOOP!',
     soundStyle: 'laser',
   },
   {
@@ -82,6 +90,7 @@ export const PRESET_THEMES: Theme[] = [
     plural: 'paw prints',
     noun: 'paw print',
     celebrationLine: 'Purrfect! 😺',
+    shortFeedback: 'Purr!',
     soundStyle: 'pop',
   },
 ]
