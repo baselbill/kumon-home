@@ -7,23 +7,37 @@ import React, {
   useRef,
 } from 'react'
 import { CURRICULUM, getLevelById, Level, TOTAL_LEVELS } from '@/lib/curriculum'
-import { Problem, generateSession } from '@/lib/problems'
+import { Problem, generateSession, narrate } from '@/lib/problems'
 import {
-  GameSave,
   LevelProgress,
-  loadGame,
-  saveGame,
+  ProfileSave,
+  loadProfiles,
+  saveProfiles,
+  getActiveProfileId,
+  setActiveProfileId as persistActiveProfileId,
+  createProfile,
   updateStreak,
   checkNewAchievements,
   ALL_ACHIEVEMENTS,
   Achievement,
 } from '@/lib/storage'
+import { Theme, PRESET_THEMES, resolveTheme } from '@/lib/themes'
 
 // ─────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────
 type Screen = 'home' | 'level-select' | 'playing' | 'session-complete' | 'level-complete'
+type SubScreen = 'none' | 'achievements' | 'profile-create' | 'profile-edit'
 type FeedbackState = 'none' | 'correct' | 'wrong'
+
+interface ProblemAttempt {
+  problemIndex: number
+  correct: boolean
+  responseTimeMs: number
+  operand1: number
+  operand2: number | null
+  operator: '+' | '-' | null
+}
 
 interface SessionResult {
   levelId: number
@@ -33,6 +47,7 @@ interface SessionResult {
   isPerfect: boolean
   starsEarned: number
   newAchievements: string[]
+  adaptiveBanner: boolean  // show "Level Up?" hint (only when mastery NOT triggered)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -67,19 +82,48 @@ function playTone(
   osc.stop(ctx.currentTime + startAt + duration + 0.05)
 }
 
-function playCorrectSound() {
+/** Theme-aware correct-answer sound. */
+function playCorrectSound(soundStyle: Theme['soundStyle'] = 'chime') {
   const ctx = createAudioCtx()
   if (!ctx) return
-  // Cheerful ascending arpeggio: C5 → E5 → G5
-  playTone(ctx, 523.25, 0,    0.25)
-  playTone(ctx, 659.25, 0.12, 0.25)
-  playTone(ctx, 783.99, 0.24, 0.35)
+  switch (soundStyle) {
+    case 'roar':
+      playTone(ctx, 220, 0, 0.12, 0.3, 'sawtooth')
+      playTone(ctx, 350, 0.1, 0.2, 0.25, 'sawtooth')
+      playTone(ctx, 523.25, 0.22, 0.3, 0.2)
+      break
+    case 'laser':
+      playTone(ctx, 440, 0, 0.08, 0.2, 'square')
+      playTone(ctx, 660, 0.07, 0.08, 0.18, 'square')
+      playTone(ctx, 880, 0.14, 0.1, 0.16, 'square')
+      playTone(ctx, 1100, 0.22, 0.15, 0.14, 'square')
+      break
+    case 'splash':
+      playTone(ctx, 392, 0, 0.18, 0.15)
+      playTone(ctx, 523.25, 0.12, 0.22, 0.12)
+      playTone(ctx, 440, 0.25, 0.28, 0.1)
+      break
+    case 'chime':
+      // Default arpeggio: C5 → E5 → G5
+      playTone(ctx, 523.25, 0, 0.25)
+      playTone(ctx, 659.25, 0.12, 0.25)
+      playTone(ctx, 783.99, 0.24, 0.35)
+      break
+    case 'pop':
+      playTone(ctx, 600, 0, 0.06, 0.15, 'square')
+      playTone(ctx, 800, 0.06, 0.06, 0.12, 'square')
+      playTone(ctx, 1000, 0.12, 0.08, 0.1, 'square')
+      break
+    default:
+      playTone(ctx, 523.25, 0, 0.25)
+      playTone(ctx, 659.25, 0.12, 0.25)
+      playTone(ctx, 783.99, 0.24, 0.35)
+  }
 }
 
 function playWrongSound() {
   const ctx = createAudioCtx()
   if (!ctx) return
-  // Short descending bloop
   playTone(ctx, 350, 0, 0.12, 0.2)
   playTone(ctx, 280, 0.1, 0.22, 0.2)
 }
@@ -87,7 +131,6 @@ function playWrongSound() {
 function playLevelCompleteSound() {
   const ctx = createAudioCtx()
   if (!ctx) return
-  // C major arpeggio + octave jump fanfare
   const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5]
   notes.forEach((f, i) => playTone(ctx, f, i * 0.14, 0.4, 0.22))
 }
@@ -99,74 +142,77 @@ function playTapSound() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Dot display (visual counting helper)
+// Dot display (visual counting helper) — themed emoji version
 // ─────────────────────────────────────────────────────────────
-const DOT_COLORS = [
-  '#3B82F6', '#22C55E', '#F97316', '#8B5CF6',
-  '#EC4899', '#14B8A6', '#FBBF24', '#EF4444',
-]
 
-function DotGroup({ count, color, crossed = false }: { count: number; color: string; crossed?: boolean }) {
-  const size = count > 10 ? 14 : count > 5 ? 16 : 20
-  return (
-    <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: `${size * 5 + 4 * 4}px` }}>
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-full relative flex-shrink-0"
-          style={{
-            width: size,
-            height: size,
-            backgroundColor: crossed && i >= (count - (crossed ? 0 : 0)) ? '#d1d5db' : color,
-            opacity: crossed ? 0.35 : 1,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
+function DotsDisplay({ problem, theme }: { problem: Problem; theme: Theme }) {
+  // Constrain bounding box so emoji aspect-ratio variation across OS/browsers
+  // doesn't break the grid layout.
+  const dotSize = problem.operand1 > 10 ? 20 : problem.operand1 > 5 ? 22 : 26
+  const dotStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: dotSize,
+    height: dotSize,
+    fontSize: dotSize * 0.85,
+    lineHeight: 1,
+    flexShrink: 0,
+  }
+  const gridWidth = `${dotSize * 5 + 4 * 4}px`
 
-function DotsDisplay({ problem }: { problem: Problem }) {
   if (problem.type === 'counting') {
     return (
       <div className="flex justify-center mt-4">
-        <DotGroup count={problem.operand1} color={DOT_COLORS[problem.operand1 % DOT_COLORS.length]} />
+        <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: gridWidth }}>
+          {Array.from({ length: problem.operand1 }).map((_, i) => (
+            <span key={i} style={dotStyle}>{theme.dotEmoji}</span>
+          ))}
+        </div>
       </div>
     )
   }
+
   if (problem.type === 'addition' && problem.operand2 !== null) {
     return (
       <div className="flex items-center gap-4 justify-center mt-4 flex-wrap">
-        <DotGroup count={problem.operand1} color="#3B82F6" />
+        <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: gridWidth }}>
+          {Array.from({ length: problem.operand1 }).map((_, i) => (
+            <span key={i} style={dotStyle}>{theme.dotEmoji}</span>
+          ))}
+        </div>
         <span className="text-3xl font-bold text-gray-500">+</span>
-        <DotGroup count={problem.operand2} color="#F97316" />
+        <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: gridWidth }}>
+          {Array.from({ length: problem.operand2 }).map((_, i) => (
+            <span key={i} style={dotStyle}>{theme.dotEmoji}</span>
+          ))}
+        </div>
       </div>
     )
   }
+
   if (problem.type === 'subtraction' && problem.operand2 !== null) {
     const kept = problem.operand1 - problem.operand2
     return (
       <div className="flex items-center gap-3 justify-center mt-4 flex-wrap">
-        {/* Show operand1 dots, last operand2 are faded/crossed */}
-        <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: 160 }}>
+        {/* All operand1 dots: theme emoji for kept, ❌ for removed */}
+        <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: `${dotSize * 6 + 5 * 4}px` }}>
           {Array.from({ length: problem.operand1 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-full flex-shrink-0"
-              style={{
-                width: 18,
-                height: 18,
-                backgroundColor: i < kept ? '#22C55E' : '#EF4444',
-                opacity: i < kept ? 1 : 0.35,
-              }}
-            />
+            <span key={i} style={{ ...dotStyle, opacity: i < kept ? 1 : 0.5 }}>
+              {i < kept ? theme.dotEmoji : '❌'}
+            </span>
           ))}
         </div>
         <span className="text-3xl font-bold text-gray-500">−</span>
-        <DotGroup count={problem.operand2} color="#EF4444" />
+        <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: gridWidth }}>
+          {Array.from({ length: problem.operand2 }).map((_, i) => (
+            <span key={i} style={dotStyle}>❌</span>
+          ))}
+        </div>
       </div>
     )
   }
+
   return null
 }
 
@@ -191,7 +237,7 @@ function NumberPad({
     if (!disabled) { playTapSound(); onDigit(d) }
   }
   const handleBack = () => { if (!disabled) { playTapSound(); onBackspace() } }
-  const handleOk   = () => { if (!disabled) onSubmit() }
+  const handleOk = () => { if (!disabled) onSubmit() }
 
   return (
     <div className="grid grid-cols-3 gap-3 w-full max-w-xs mx-auto">
@@ -235,24 +281,20 @@ function NumberPad({
 // ─────────────────────────────────────────────────────────────
 // Progress dots (top of game screen)
 // ─────────────────────────────────────────────────────────────
-function ProgressDots({ total, current, correct }: { total: number; current: number; correct: number }) {
+function ProgressDots({ total, current }: { total: number; current: number }) {
   return (
     <div className="flex gap-1 flex-wrap justify-center">
-      {Array.from({ length: total }).map((_, i) => {
-        const done = i < current
-        const isCorrect = done  // simplified — we track overall correct via sessionResults
-        return (
-          <div
-            key={i}
-            className="rounded-full transition-all duration-300"
-            style={{
-              width: total > 15 ? 10 : 14,
-              height: total > 15 ? 10 : 14,
-              backgroundColor: i < current ? '#22C55E' : i === current ? '#FBBF24' : '#D1D5DB',
-            }}
-          />
-        )
-      })}
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-full transition-all duration-300"
+          style={{
+            width: total > 15 ? 10 : 14,
+            height: total > 15 ? 10 : 14,
+            backgroundColor: i < current ? '#22C55E' : i === current ? '#FBBF24' : '#D1D5DB',
+          }}
+        />
+      ))}
     </div>
   )
 }
@@ -327,14 +369,15 @@ function AchievementToast({
 }
 
 // ─────────────────────────────────────────────────────────────
-// Mascot
+// Mascot — themed character, mood-aware
 // ─────────────────────────────────────────────────────────────
-function Mascot({ mood }: { mood: 'idle' | 'happy' | 'thinking' | 'celebrate' }) {
+function Mascot({ mood, theme }: { mood: 'idle' | 'happy' | 'thinking' | 'celebrate'; theme: Theme }) {
+  // idle → theme mascot; emotional states use expressive emoji
   const face =
     mood === 'happy'     ? '🤩' :
     mood === 'thinking'  ? '🤔' :
     mood === 'celebrate' ? '🥳' :
-    '🦉'
+    theme.mascot
 
   return (
     <div
@@ -348,48 +391,367 @@ function Mascot({ mood }: { mood: 'idle' | 'happy' | 'thinking' | 'celebrate' })
 }
 
 // ─────────────────────────────────────────────────────────────
-// Home Screen
+// Toggle switch (shared UI primitive)
+// ─────────────────────────────────────────────────────────────
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!on)}
+      className={`w-12 h-7 rounded-full transition-all relative flex-shrink-0 ${on ? 'bg-purple-500' : 'bg-gray-300'}`}
+      role="switch"
+      aria-checked={on}
+    >
+      <div
+        className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-all ${on ? 'left-5' : 'left-0.5'}`}
+      />
+    </button>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Profile Creator — parent-only screen
+// ─────────────────────────────────────────────────────────────
+function ProfileCreator({
+  onDone,
+  onCancel,
+}: {
+  onDone: (name: string, themeKey: string, readerMode: boolean) => void
+  onCancel?: () => void
+}) {
+  const [name, setName] = useState('')
+  const [themeKey, setThemeKey] = useState(PRESET_THEMES[0].key)
+  const [readerMode, setReaderMode] = useState(false)
+
+  const selectedTheme = PRESET_THEMES.find(t => t.key === themeKey) ?? PRESET_THEMES[0]
+
+  return (
+    <div className="flex flex-col gap-5 p-6 max-w-sm mx-auto">
+      {/* Header */}
+      <div className="text-center">
+        <div className="text-2xl font-bold text-gray-800">Add a Player</div>
+        <div className="text-sm text-gray-500 mt-1">Parents set this up</div>
+      </div>
+
+      {/* Name input */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1">Player name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="e.g. Emma"
+          maxLength={20}
+          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400"
+          autoComplete="off"
+        />
+      </div>
+
+      {/* Theme picker — emoji grid, no reading required */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Choose a world</label>
+        <div className="grid grid-cols-4 gap-2">
+          {PRESET_THEMES.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setThemeKey(t.key)}
+              className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                themeKey === t.key
+                  ? 'border-purple-500 bg-purple-50'
+                  : 'border-gray-200 bg-white'
+              }`}
+            >
+              <span className="text-2xl">{t.mascot}</span>
+              <span className="text-xs font-medium text-gray-600 leading-tight text-center">{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Reader mode toggle */}
+      <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+        <div>
+          <div className="font-semibold text-gray-800">
+            Can {name.trim() || 'this player'} read yet?
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">Adds story sentences</div>
+        </div>
+        <Toggle on={readerMode} onChange={setReaderMode} />
+      </div>
+
+      {/* Done button */}
+      <button
+        onClick={() => {
+          const trimmed = name.trim()
+          if (trimmed) onDone(trimmed, themeKey, readerMode)
+        }}
+        disabled={!name.trim()}
+        className="w-full py-4 text-xl font-bold rounded-2xl text-white bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform shadow-lg"
+      >
+        Let&apos;s play! {selectedTheme.mascot}
+      </button>
+
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          className="w-full py-2 text-sm font-semibold text-gray-400 hover:text-gray-600"
+        >
+          Cancel
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Profile Editor modal — shown on long-press of avatar chip
+// ─────────────────────────────────────────────────────────────
+function ProfileEditor({
+  profile,
+  canDelete,
+  onSave,
+  onDelete,
+  onCancel,
+}: {
+  profile: ProfileSave
+  canDelete: boolean
+  onSave: (updates: Pick<ProfileSave, 'profileName' | 'themeKey' | 'readerMode'>) => void
+  onDelete: () => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(profile.profileName)
+  const [themeKey, setThemeKey] = useState(profile.themeKey)
+  const [readerMode, setReaderMode] = useState(profile.readerMode)
+  const [customText, setCustomText] = useState('')
+  const [showCustom, setShowCustom] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  const handleSave = () => {
+    let finalThemeKey = themeKey
+    if (showCustom && customText.trim()) {
+      finalThemeKey = resolveTheme(customText).key
+    }
+    onSave({
+      profileName: name.trim() || profile.profileName,
+      themeKey: finalThemeKey,
+      readerMode,
+    })
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-t-3xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="text-xl font-bold text-gray-800 mb-4">Edit Player</div>
+
+        {/* Name */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            maxLength={20}
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:outline-none focus:border-purple-400"
+            autoComplete="off"
+          />
+        </div>
+
+        {/* Theme grid */}
+        <div className="mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">World</label>
+          <div className="grid grid-cols-4 gap-2">
+            {PRESET_THEMES.map(t => (
+              <button
+                key={t.key}
+                onClick={() => { setThemeKey(t.key); setShowCustom(false) }}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                  themeKey === t.key && !showCustom
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <span className="text-2xl">{t.mascot}</span>
+                <span className="text-xs font-medium text-gray-600 leading-tight text-center">{t.label}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowCustom(s => !s)}
+            className="mt-2 text-sm text-purple-600 font-semibold"
+          >
+            {showCustom ? '▼' : '▶'} Custom theme
+          </button>
+          {showCustom && (
+            <input
+              type="text"
+              value={customText}
+              onChange={e => setCustomText(e.target.value)}
+              placeholder='e.g. "ninja cats" or "pirates"'
+              className="w-full mt-2 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-purple-400"
+              autoComplete="off"
+            />
+          )}
+        </div>
+
+        {/* Reader mode */}
+        <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4 mb-4">
+          <div>
+            <div className="font-semibold text-gray-800">
+              Can {name.trim() || 'this player'} read yet?
+            </div>
+            <div className="text-xs text-gray-500">Story sentences</div>
+          </div>
+          <Toggle on={readerMode} onChange={setReaderMode} />
+        </div>
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          className="w-full py-3 text-lg font-bold rounded-2xl text-white bg-purple-500 hover:bg-purple-600 active:scale-95 transition-transform shadow mb-3"
+        >
+          Save changes
+        </button>
+
+        {/* Delete */}
+        {canDelete && (
+          showDeleteConfirm ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold"
+              >
+                Keep
+              </button>
+              <button
+                onClick={onDelete}
+                className="flex-1 py-2 rounded-xl bg-red-500 text-white font-bold"
+              >
+                Delete!
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full py-2 text-red-400 font-semibold text-sm"
+            >
+              Delete player…
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Home Screen — with profile chips + long-press to edit
 // ─────────────────────────────────────────────────────────────
 function HomeScreen({
-  save,
+  profiles,
+  activeProfile,
+  theme,
   onPlay,
   onSelectLevel,
   onViewAchievements,
+  onSwitchProfile,
+  onAddProfile,
+  onLongPressProfile,
 }: {
-  save: GameSave
+  profiles: ProfileSave[]
+  activeProfile: ProfileSave
+  theme: Theme
   onPlay: () => void
   onSelectLevel: () => void
   onViewAchievements: () => void
+  onSwitchProfile: (id: string) => void
+  onAddProfile: () => void
+  onLongPressProfile: (profile: ProfileSave) => void
 }) {
-  const highestLevel = getLevelById(save.highestUnlockedLevel)
-  const allDone = save.highestUnlockedLevel > TOTAL_LEVELS
+  const highestLevel = getLevelById(activeProfile.highestUnlockedLevel)
+  const allDone = activeProfile.highestUnlockedLevel > TOTAL_LEVELS
+
+  // Long-press implementation via touch + mouse events (longpress is not a DOM event)
+  const longPressTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+
+  const startLongPress = (profile: ProfileSave) => {
+    longPressTimers.current[profile.profileId] = setTimeout(() => {
+      onLongPressProfile(profile)
+    }, 500)
+  }
+
+  const cancelLongPress = (profileId: string) => {
+    if (longPressTimers.current[profileId]) {
+      clearTimeout(longPressTimers.current[profileId])
+      delete longPressTimers.current[profileId]
+    }
+  }
 
   return (
     <div className="flex flex-col items-center gap-6 p-6 w-full max-w-sm mx-auto text-center">
+
+      {/* Profile chips */}
+      <div className="flex gap-2 flex-wrap justify-center w-full">
+        {profiles.map(p => {
+          const pTheme = PRESET_THEMES.find(t => t.key === p.themeKey) ?? PRESET_THEMES[0]
+          const isActive = p.profileId === activeProfile.profileId
+          return (
+            <button
+              key={p.profileId}
+              onClick={() => onSwitchProfile(p.profileId)}
+              onTouchStart={() => startLongPress(p)}
+              onTouchEnd={() => cancelLongPress(p.profileId)}
+              onTouchCancel={() => cancelLongPress(p.profileId)}
+              onMouseDown={() => startLongPress(p)}
+              onMouseUp={() => cancelLongPress(p.profileId)}
+              onMouseLeave={() => cancelLongPress(p.profileId)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 transition-all text-sm font-semibold select-none ${
+                isActive
+                  ? 'border-purple-500 bg-purple-100 text-purple-700'
+                  : 'border-gray-200 bg-white text-gray-600'
+              }`}
+            >
+              <span>{pTheme.mascot}</span>
+              <span>{p.profileName}</span>
+            </button>
+          )
+        })}
+        <button
+          onClick={onAddProfile}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-dashed border-gray-300 text-gray-400 text-sm hover:border-gray-400"
+        >
+          + Add
+        </button>
+      </div>
+
       {/* Header */}
-      <div className="text-4xl font-bold text-purple-700 leading-tight mt-4">
+      <div className="text-4xl font-bold text-purple-700 leading-tight mt-2">
         Math Adventure!
       </div>
 
-      {/* Mascot */}
-      <Mascot mood="idle" />
+      {/* Themed mascot */}
+      <Mascot mood="idle" theme={theme} />
 
       {/* Stats row */}
       <div className="flex gap-4 justify-center w-full">
         <div className="flex-1 bg-yellow-100 border-2 border-yellow-300 rounded-2xl p-3">
           <div className="text-2xl">⭐</div>
-          <div className="text-2xl font-bold text-yellow-600">{save.totalStars}</div>
+          <div className="text-2xl font-bold text-yellow-600">{activeProfile.totalStars}</div>
           <div className="text-xs text-gray-500">Stars</div>
         </div>
         <div className="flex-1 bg-orange-100 border-2 border-orange-300 rounded-2xl p-3">
           <div className="text-2xl">🔥</div>
-          <div className="text-2xl font-bold text-orange-500">{save.streak}</div>
+          <div className="text-2xl font-bold text-orange-500">{activeProfile.streak}</div>
           <div className="text-xs text-gray-500">Day streak</div>
         </div>
         <div className="flex-1 bg-purple-100 border-2 border-purple-300 rounded-2xl p-3">
           <div className="text-2xl">{highestLevel?.icon ?? '🏆'}</div>
           <div className="text-2xl font-bold text-purple-600">
-            {allDone ? '✓' : save.highestUnlockedLevel}
+            {allDone ? '✓' : activeProfile.highestUnlockedLevel}
           </div>
           <div className="text-xs text-gray-500">
             {allDone ? 'Done!' : 'Level'}
@@ -413,7 +775,7 @@ function HomeScreen({
         <div className="w-full rounded-2xl p-4 bg-yellow-400 text-gray-900 shadow-lg">
           <div className="text-3xl mb-1">🏆</div>
           <div className="font-bold text-lg">You finished all levels!</div>
-          <div className="text-sm">You are a Math Master!</div>
+          <div className="text-sm">{theme.celebrationLine}</div>
         </div>
       )}
 
@@ -439,6 +801,10 @@ function HomeScreen({
           🏅 Awards
         </button>
       </div>
+
+      <div className="text-xs text-gray-400 pb-2">
+        Hold an avatar to edit • Tap to switch player
+      </div>
     </div>
   )
 }
@@ -447,11 +813,11 @@ function HomeScreen({
 // Level Select Screen
 // ─────────────────────────────────────────────────────────────
 function LevelSelectScreen({
-  save,
+  activeProfile,
   onSelect,
   onBack,
 }: {
-  save: GameSave
+  activeProfile: ProfileSave
   onSelect: (levelId: number) => void
   onBack: () => void
 }) {
@@ -464,8 +830,8 @@ function LevelSelectScreen({
 
       <div className="grid grid-cols-2 gap-3 pb-6">
         {CURRICULUM.map(level => {
-          const unlocked = level.id <= save.highestUnlockedLevel
-          const prog = save.levelProgress[level.id]
+          const unlocked = level.id <= activeProfile.highestUnlockedLevel
+          const prog = activeProfile.levelProgress[level.id]
           const completed = prog?.completed ?? false
 
           return (
@@ -502,7 +868,7 @@ function LevelSelectScreen({
 // ─────────────────────────────────────────────────────────────
 // Achievements Screen
 // ─────────────────────────────────────────────────────────────
-function AchievementsScreen({ save, onBack }: { save: GameSave; onBack: () => void }) {
+function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileSave; onBack: () => void }) {
   return (
     <div className="flex flex-col gap-4 p-4 w-full max-w-sm mx-auto pb-8">
       <div className="flex items-center gap-2">
@@ -511,7 +877,7 @@ function AchievementsScreen({ save, onBack }: { save: GameSave; onBack: () => vo
       </div>
       <div className="flex flex-col gap-3">
         {ALL_ACHIEVEMENTS.map(a => {
-          const earned = save.achievements.includes(a.id)
+          const earned = activeProfile.achievements.includes(a.id)
           return (
             <div
               key={a.id}
@@ -544,6 +910,9 @@ function GameScreen({
   feedback,
   sessionCorrect,
   floatingStars,
+  theme,
+  readerMode,
+  showDots,
   onDigit,
   onBackspace,
   onSubmit,
@@ -555,6 +924,9 @@ function GameScreen({
   feedback: FeedbackState
   sessionCorrect: number
   floatingStars: FloatingStar[]
+  theme: Theme
+  readerMode: boolean
+  showDots: boolean
   onDigit: (d: number) => void
   onBackspace: () => void
   onSubmit: () => void
@@ -581,11 +953,7 @@ function GameScreen({
       </div>
 
       {/* Progress dots */}
-      <ProgressDots
-        total={level.problemsPerSession}
-        current={problemIndex}
-        correct={sessionCorrect}
-      />
+      <ProgressDots total={level.problemsPerSession} current={problemIndex} />
 
       {/* Problem card */}
       <div
@@ -607,44 +975,39 @@ function GameScreen({
           </div>
         ))}
 
-        {/* Mascot */}
+        {/* Themed mascot */}
         <div className="flex justify-center mb-3">
           <Mascot
-            mood={
-              isCorrect ? 'happy' :
-              isWrong   ? 'thinking' :
-              'idle'
-            }
+            mood={isCorrect ? 'happy' : isWrong ? 'thinking' : 'idle'}
+            theme={theme}
           />
         </div>
 
-        {/* Problem text */}
-        {problem.type === 'counting' ? (
+        {/* Problem text: narrated sentence for readers, equation for non-readers */}
+        {readerMode ? (
+          <div className="text-center text-xl font-semibold text-gray-700 mb-2 leading-snug">
+            {narrate(problem, theme)}
+          </div>
+        ) : problem.type === 'counting' ? (
           <div className="text-center text-2xl font-bold text-gray-600 mb-2">
-            How many dots do you see?
+            How many?
           </div>
         ) : (
           <div className="text-center mb-2">
-            <span className="text-5xl font-bold text-gray-800">
-              {problem.operand1}
-            </span>
-            <span className="text-4xl font-bold text-gray-500 mx-3">
-              {problem.operator}
-            </span>
-            <span className="text-5xl font-bold text-gray-800">
-              {problem.operand2}
-            </span>
+            <span className="text-5xl font-bold text-gray-800">{problem.operand1}</span>
+            <span className="text-4xl font-bold text-gray-500 mx-3">{problem.operator}</span>
+            <span className="text-5xl font-bold text-gray-800">{problem.operand2}</span>
             <span className="text-4xl font-bold text-gray-400 mx-3">=</span>
           </div>
         )}
 
-        {/* Visual dots (if level uses them) */}
-        {level.showDots && <DotsDisplay problem={problem} />}
+        {/* Themed dot display */}
+        {showDots && <DotsDisplay problem={problem} theme={theme} />}
 
         {/* Feedback message */}
         {isCorrect && (
           <div className="text-center mt-3 text-green-600 font-bold text-xl animate-bounce-in">
-            Amazing! 🎉
+            {theme.shortFeedback} 🎉
           </div>
         )}
         {isWrong && (
@@ -686,13 +1049,17 @@ function GameScreen({
 function SessionCompleteScreen({
   result,
   level,
+  theme,
   onContinue,
   onRetry,
+  onNextLevel,
 }: {
   result: SessionResult
   level: Level
+  theme: Theme
   onContinue: () => void
   onRetry: () => void
+  onNextLevel: () => void
 }) {
   const pct = Math.round((result.correct / result.total) * 100)
   const masteryPct = Math.round(level.masteryThreshold * 100)
@@ -712,6 +1079,13 @@ function SessionCompleteScreen({
           ? 'Level Mastered!'
           : 'Good Practice!'}
       </div>
+
+      {/* Theme celebration line on mastery */}
+      {result.mastered && (
+        <div className="text-lg font-semibold text-purple-600">
+          {theme.celebrationLine}
+        </div>
+      )}
 
       {/* Score card */}
       <div className="w-full rounded-3xl bg-white shadow-lg p-5 border-2 border-gray-100">
@@ -736,6 +1110,22 @@ function SessionCompleteScreen({
       <div className="flex items-center gap-2 text-2xl font-bold text-yellow-500">
         +{result.starsEarned} ⭐ earned this session
       </div>
+
+      {/* Adaptive "Level Up?" banner — only when mastery NOT triggered */}
+      {result.adaptiveBanner && !result.mastered && (
+        <div className="w-full rounded-2xl bg-blue-50 border-2 border-blue-300 p-4">
+          <div className="font-bold text-blue-700">🚀 You&apos;re flying!</div>
+          <div className="text-sm text-blue-600 mt-0.5">
+            You were super fast and accurate. Ready to try the next level?
+          </div>
+          <button
+            onClick={onNextLevel}
+            className="mt-3 w-full py-2 bg-blue-500 text-white font-bold rounded-xl active:scale-95 transition-transform"
+          >
+            Try next level →
+          </button>
+        </div>
+      )}
 
       {/* New achievements */}
       {result.newAchievements.length > 0 && (
@@ -788,10 +1178,12 @@ function SessionCompleteScreen({
 function LevelCompleteScreen({
   level,
   nextLevel,
+  theme,
   onContinue,
 }: {
   level: Level
   nextLevel: Level | null
+  theme: Theme
   onContinue: () => void
 }) {
   useEffect(() => {
@@ -804,6 +1196,9 @@ function LevelCompleteScreen({
       <div className="text-7xl mt-6 animate-bounce">{level.icon}</div>
       <div className="text-3xl font-bold text-gray-800 animate-bounce-in">
         {level.unlockMessage}
+      </div>
+      <div className="text-2xl font-bold text-purple-600">
+        {theme.celebrationLine}
       </div>
       <div className="text-5xl font-bold text-yellow-500 animate-pulse-scale">
         🏆 Level {level.id} Complete!
@@ -841,16 +1236,29 @@ function LevelCompleteScreen({
 // Main MathGame component — orchestrates everything
 // ─────────────────────────────────────────────────────────────
 export default function MathGame() {
-  // ── Persistent save ──────────────────────────────────────
-  const [save, setSave] = useState<GameSave>(() => loadGame())
+
+  // ── Multi-profile state ───────────────────────────────────
+  const [profiles, setProfiles] = useState<ProfileSave[]>(() => loadProfiles())
+  const [activeProfileId, setActiveProfileIdState] = useState<string>(() => {
+    const savedId = getActiveProfileId()
+    const profs = loadProfiles()
+    if (savedId && profs.some(p => p.profileId === savedId)) return savedId
+    return profs[0]?.profileId ?? ''
+  })
+
+  // Derived active profile and theme
+  const activeProfile = profiles.find(p => p.profileId === activeProfileId) ?? profiles[0]
+  const theme = PRESET_THEMES.find(t => t.key === activeProfile?.themeKey) ?? PRESET_THEMES[0]
 
   // ── Navigation ───────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('home')
-  const [subScreen, setSubScreen] = useState<'none' | 'achievements'>('none')
+  const [subScreen, setSubScreen] = useState<SubScreen>('none')
+  const [editingProfile, setEditingProfile] = useState<ProfileSave | null>(null)
 
   // ── Session state ────────────────────────────────────────
   const [activeLevelId, setActiveLevelId] = useState<number>(1)
   const [problems, setProblems] = useState<Problem[]>([])
+  const [sessionShowDots, setSessionShowDots] = useState<boolean>(true)
   const [problemIndex, setProblemIndex] = useState(0)
   const [userAnswer, setUserAnswer] = useState('')
   const [feedback, setFeedback] = useState<FeedbackState>('none')
@@ -862,16 +1270,37 @@ export default function MathGame() {
 
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const starIdRef = useRef(0)
+  const problemStartTime = useRef<number>(Date.now())
+  const sessionAttemptsRef = useRef<ProblemAttempt[]>([])
+  const sessionCorrectRef = useRef(0)  // mirror of sessionCorrect for closure-safe endSession
 
-  // ── Persist save whenever it changes ─────────────────────
-  useEffect(() => {
-    saveGame(save)
-  }, [save])
+  // ── Profile helpers ───────────────────────────────────────
 
-  // ── Update streak on mount ────────────────────────────────
-  useEffect(() => {
-    setSave(prev => updateStreak(prev))
+  const switchProfile = useCallback((id: string) => {
+    setActiveProfileIdState(id)
+    persistActiveProfileId(id)
   }, [])
+
+  const updateProfile = useCallback(
+    (profileId: string, updater: (prev: ProfileSave) => ProfileSave) => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.profileId === profileId)
+        if (idx === -1) return prev
+        const updated = updater(prev[idx])
+        const next = [...prev]
+        next[idx] = updated
+        saveProfiles(next)
+        return next
+      })
+    },
+    []
+  )
+
+  // ── Update streak on mount (and when switching profiles) ─
+  useEffect(() => {
+    if (!activeProfileId) return
+    updateProfile(activeProfileId, prev => updateStreak(prev))
+  }, [activeProfileId, updateProfile])
 
   // ── Achievement toast queue ───────────────────────────────
   useEffect(() => {
@@ -885,22 +1314,34 @@ export default function MathGame() {
   const startSession = useCallback((levelId: number) => {
     const level = getLevelById(levelId)
     if (!level) return
+
     setActiveLevelId(levelId)
-    setProblems(generateSession(level))
+
+    // Get this profile's adaptive state for this level
+    const prof = profiles.find(p => p.profileId === activeProfileId) ?? profiles[0]
+    const adaptiveState = prof?.adaptiveState?.[levelId]
+
+    const { problems: generatedProblems, showDots: effectiveShowDots } =
+      generateSession(level, adaptiveState)
+
+    setProblems(generatedProblems)
+    setSessionShowDots(effectiveShowDots)
     setProblemIndex(0)
     setUserAnswer('')
     setFeedback('none')
     setSessionCorrect(0)
+    sessionCorrectRef.current = 0
     setSessionResult(null)
     setFloatingStars([])
+    sessionAttemptsRef.current = []
+    problemStartTime.current = Date.now()
     setScreen('playing')
-  }, [])
+  }, [profiles, activeProfileId])
 
   // ── Digit input ───────────────────────────────────────────
   const handleDigit = useCallback((d: number) => {
     setUserAnswer(prev => {
-      // Max 2 digits (answers ≤ 99)
-      if (prev.length >= 2) return prev
+      if (prev.length >= 2) return prev  // max 2 digits (answers ≤ 99)
       return prev + String(d)
     })
   }, [])
@@ -921,12 +1362,26 @@ export default function MathGame() {
 
     const parsed = parseInt(userAnswer, 10)
     const isRight = parsed === problem.answer
+    const responseMs = Date.now() - problemStartTime.current
+
+    // Record attempt for adaptive analysis
+    sessionAttemptsRef.current.push({
+      problemIndex,
+      correct: isRight,
+      responseTimeMs: responseMs,
+      operand1: problem.operand1,
+      operand2: problem.operand2,
+      operator: problem.operator,
+    })
 
     if (isRight) {
-      playCorrectSound()
+      playCorrectSound(theme.soundStyle)
       setFeedback('correct')
-      setSessionCorrect(c => c + 1)
-      // spawn floating star
+      setSessionCorrect(c => {
+        sessionCorrectRef.current = c + 1
+        return c + 1
+      })
+      // Spawn floating star
       const id = ++starIdRef.current
       setFloatingStars(s => [...s, { id, x: 30 + Math.random() * 40, y: 0 }])
       setTimeout(() => setFloatingStars(s => s.filter(x => x.id !== id)), 1400)
@@ -940,7 +1395,8 @@ export default function MathGame() {
     feedbackTimer.current = setTimeout(() => {
       advanceProblem(isRight, level)
     }, delay)
-  }, [feedback, userAnswer, activeLevelId, problems, problemIndex])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback, userAnswer, activeLevelId, problems, problemIndex, theme.soundStyle])
 
   // ── Advance to next problem or end session ────────────────
   const advanceProblem = useCallback(
@@ -948,29 +1404,70 @@ export default function MathGame() {
       const nextIndex = problemIndex + 1
 
       if (nextIndex >= level.problemsPerSession) {
-        // Session complete — calculate results
         endSession(wasCorrect, level)
       } else {
         setProblemIndex(nextIndex)
         setUserAnswer('')
         setFeedback('none')
+        problemStartTime.current = Date.now()  // reset timer for next problem
       }
     },
-    [problemIndex, sessionCorrect]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [problemIndex]
   )
 
+  // ── End session: compute results + adaptive analysis ──────
   const endSession = useCallback(
     (lastWasCorrect: boolean, level: Level) => {
-      const finalCorrect = sessionCorrect + (lastWasCorrect ? 1 : 0)
+      const finalCorrect = sessionCorrectRef.current + (lastWasCorrect ? 1 : 0)
       const total = level.problemsPerSession
-      const mastered =
-        finalCorrect / total >= level.masteryThreshold
+      const mastered = finalCorrect / total >= level.masteryThreshold
       const isPerfect = finalCorrect === total
       const starsEarned = finalCorrect + (isPerfect ? 5 : 0)
 
-      // Update save
-      setSave(prev => {
-        const existing: LevelProgress = prev.levelProgress[level.id] ?? {
+      // ── Adaptive analysis on final 10 of session ──────────
+      const attempts = sessionAttemptsRef.current
+      const final10 = attempts.slice(-10)
+      // D3: typed sentinel instead of `as any`
+      type OffsetDirection = 'up' | 'down' | null
+      let offsetDirection: OffsetDirection = null
+      let adaptiveBanner = false
+
+      if (final10.length >= 10) {
+        const accuracy = final10.filter(a => a.correct).length / 10
+        const avgTime = final10.reduce((s, a) => s + a.responseTimeMs, 0) / 10
+        const hitHighBar = accuracy > 0.95 && avgTime < 3000
+        const hitLowBar  = accuracy < 0.70
+
+        if (hitHighBar) {
+          offsetDirection = 'up'
+          if (!mastered) adaptiveBanner = true
+        } else if (hitLowBar) {
+          offsetDirection = 'down'
+        }
+      }
+
+      // D2: All profile reads + writes happen inside the functional updater
+      // so they always operate on the latest state, never a stale snapshot.
+      // collectedNewAchIds is written synchronously by the updater before
+      // React schedules a re-render, making it safe to read immediately after.
+      let collectedNewAchIds: string[] = []
+
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.profileId === activeProfileId)
+        if (idx === -1) return prev
+        const prof = prev[idx]  // always the current, unambiguous profile
+
+        const currentAdaptiveOffset = prof.adaptiveState?.[level.id]?.maxOperandOffset ?? 0
+        const resolvedOffset =
+          offsetDirection === 'up'
+            ? Math.min(currentAdaptiveOffset + 1, 3)
+            : offsetDirection === 'down'
+              ? Math.max(currentAdaptiveOffset - 1, -2)
+              : currentAdaptiveOffset
+
+        // ── Build updated profile ──────────────────────────────
+        const existing: LevelProgress = prof.levelProgress[level.id] ?? {
           bestScore: 0,
           totalAttempts: 0,
           totalCorrect: 0,
@@ -981,66 +1478,79 @@ export default function MathGame() {
           totalAttempts: existing.totalAttempts + total,
           totalCorrect: existing.totalCorrect + finalCorrect,
           completed: existing.completed || mastered,
-          completedAt: existing.completed ? existing.completedAt : mastered ? new Date().toISOString() : undefined,
+          completedAt: existing.completed
+            ? existing.completedAt
+            : mastered ? new Date().toISOString() : undefined,
         }
 
         const newHighest = mastered
-          ? Math.max(prev.highestUnlockedLevel, level.id + 1)
-          : prev.highestUnlockedLevel
+          ? Math.max(prof.highestUnlockedLevel, level.id + 1)
+          : prof.highestUnlockedLevel
 
-        const updated: GameSave = {
-          ...prev,
-          totalStars: prev.totalStars + starsEarned,
-          totalSessionsPlayed: prev.totalSessionsPlayed + 1,
-          totalProblemsAnswered: prev.totalProblemsAnswered + total,
-          totalCorrectAnswers: prev.totalCorrectAnswers + finalCorrect,
+        let updated: ProfileSave = {
+          ...prof,
+          totalStars: prof.totalStars + starsEarned,
+          totalSessionsPlayed: prof.totalSessionsPlayed + 1,
+          totalProblemsAnswered: prof.totalProblemsAnswered + total,
+          totalCorrectAnswers: prof.totalCorrectAnswers + finalCorrect,
           highestUnlockedLevel: newHighest,
-          levelProgress: { ...prev.levelProgress, [level.id]: newProg },
+          levelProgress: { ...prof.levelProgress, [level.id]: newProg },
+          adaptiveState: {
+            ...prof.adaptiveState,
+            [level.id]: {
+              maxOperandOffset: resolvedOffset,
+              lastUpdated: new Date().toISOString(),
+            },
+          },
         }
 
-        // Handle "perfect" achievement separately (needs current session info)
-        if (isPerfect && !prev.achievements.includes('perfect_session')) {
-          updated.achievements = [...updated.achievements, 'perfect_session']
+        // ── Achievements ───────────────────────────────────────
+        const prevHadPerfect = prof.achievements.includes('perfect_session')
+        const newAchIds: string[] = []
+
+        if (isPerfect && !prevHadPerfect) {
+          updated = { ...updated, achievements: [...updated.achievements, 'perfect_session'] }
+          newAchIds.push('perfect_session')
         }
 
-        // Check other achievements
-        const newAchIds = checkNewAchievements(updated)
-        if (newAchIds.length > 0) {
-          updated.achievements = [...updated.achievements, ...newAchIds]
+        const autoAchIds = checkNewAchievements(updated)
+        if (autoAchIds.length > 0) {
+          updated = { ...updated, achievements: [...updated.achievements, ...autoAchIds] }
+          newAchIds.push(...autoAchIds)
         }
 
-        // Queue achievement toasts
-        const toShow = [
-          ...(isPerfect && !prev.achievements.includes('perfect_session') ? ['perfect_session'] : []),
-          ...newAchIds,
-        ]
-        if (toShow.length > 0) {
-          const toasts = toShow
-            .map(id => ALL_ACHIEVEMENTS.find(a => a.id === id))
-            .filter((a): a is Achievement => !!a)
-          setToastQueue(q => [...q, ...toasts])
-        }
+        collectedNewAchIds = newAchIds  // capture for post-updater side effects
 
-        const result: SessionResult = {
-          levelId: level.id,
-          correct: finalCorrect,
-          total,
-          mastered,
-          isPerfect,
-          starsEarned,
-          newAchievements: [
-            ...(isPerfect && !prev.achievements.includes('perfect_session') ? ['perfect_session'] : []),
-            ...newAchIds,
-          ],
-        }
-        setSessionResult(result)
-        setScreen('session-complete')
-        if (mastered) playLevelCompleteSound()
-
-        return updated
+        const next = [...prev]
+        next[idx] = updated
+        saveProfiles(next)
+        return next
       })
+
+      // ── Queue achievement toasts ───────────────────────────
+      if (collectedNewAchIds.length > 0) {
+        const toasts = collectedNewAchIds
+          .map(id => ALL_ACHIEVEMENTS.find(a => a.id === id))
+          .filter((a): a is Achievement => !!a)
+        setToastQueue(q => [...q, ...toasts])
+      }
+
+      // ── Set result and advance screen ──────────────────────
+      const result: SessionResult = {
+        levelId: level.id,
+        correct: finalCorrect,
+        total,
+        mastered,
+        isPerfect,
+        starsEarned,
+        newAchievements: collectedNewAchIds,
+        adaptiveBanner,
+      }
+      setSessionResult(result)
+      setScreen('session-complete')
+      if (mastered) playLevelCompleteSound()
     },
-    [sessionCorrect]
+    [activeProfileId]  // D2: `profiles` removed — updater reads fresh prev instead
   )
 
   // ── Keyboard support ──────────────────────────────────────
@@ -1065,6 +1575,23 @@ export default function MathGame() {
   // ── Derived values ────────────────────────────────────────
   const activeLevel = getLevelById(activeLevelId)
 
+  // ── No profiles yet → show profile creator ────────────────
+  if (profiles.length === 0 || !activeProfile) {
+    return (
+      <div className="relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden">
+        <ProfileCreator
+          onDone={(name, themeKey, readerMode) => {
+            const newProfile = createProfile(name, themeKey, readerMode)
+            const newProfiles = [newProfile]
+            setProfiles(newProfiles)
+            saveProfiles(newProfiles)
+            switchProfile(newProfile.profileId)
+          }}
+        />
+      </div>
+    )
+  }
+
   // ── Render ────────────────────────────────────────────────
   return (
     <div className="relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden">
@@ -1076,27 +1603,77 @@ export default function MathGame() {
         />
       )}
 
+      {/* Profile editor modal (long-press) */}
+      {subScreen === 'profile-edit' && editingProfile && (
+        <ProfileEditor
+          profile={editingProfile}
+          canDelete={profiles.length > 1}
+          onSave={updates => {
+            updateProfile(editingProfile.profileId, prev => ({ ...prev, ...updates }))
+            setSubScreen('none')
+            setEditingProfile(null)
+          }}
+          onDelete={() => {
+            const remaining = profiles.filter(p => p.profileId !== editingProfile.profileId)
+            setProfiles(remaining)
+            saveProfiles(remaining)
+            if (activeProfileId === editingProfile.profileId && remaining.length > 0) {
+              switchProfile(remaining[0].profileId)
+            }
+            setSubScreen('none')
+            setEditingProfile(null)
+          }}
+          onCancel={() => {
+            setSubScreen('none')
+            setEditingProfile(null)
+          }}
+        />
+      )}
+
+      {/* ── Profile Create ── */}
+      {subScreen === 'profile-create' && (
+        <ProfileCreator
+          onDone={(name, themeKey, readerMode) => {
+            const newProfile = createProfile(name, themeKey, readerMode)
+            const newProfiles = [...profiles, newProfile]
+            setProfiles(newProfiles)
+            saveProfiles(newProfiles)
+            switchProfile(newProfile.profileId)
+            setSubScreen('none')
+          }}
+          onCancel={() => setSubScreen('none')}
+        />
+      )}
+
       {/* ── Home ── */}
       {screen === 'home' && subScreen === 'none' && (
         <HomeScreen
-          save={save}
+          profiles={profiles}
+          activeProfile={activeProfile}
+          theme={theme}
           onPlay={() => {
-            const lvl = Math.min(save.highestUnlockedLevel, TOTAL_LEVELS)
+            const lvl = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
             startSession(lvl)
           }}
           onSelectLevel={() => setScreen('level-select')}
           onViewAchievements={() => setSubScreen('achievements')}
+          onSwitchProfile={id => switchProfile(id)}
+          onAddProfile={() => setSubScreen('profile-create')}
+          onLongPressProfile={profile => {
+            setEditingProfile(profile)
+            setSubScreen('profile-edit')
+          }}
         />
       )}
 
       {screen === 'home' && subScreen === 'achievements' && (
-        <AchievementsScreen save={save} onBack={() => setSubScreen('none')} />
+        <AchievementsScreen activeProfile={activeProfile} onBack={() => setSubScreen('none')} />
       )}
 
       {/* ── Level Select ── */}
       {screen === 'level-select' && (
         <LevelSelectScreen
-          save={save}
+          activeProfile={activeProfile}
           onSelect={(id) => startSession(id)}
           onBack={() => setScreen('home')}
         />
@@ -1112,6 +1689,9 @@ export default function MathGame() {
           feedback={feedback}
           sessionCorrect={sessionCorrect}
           floatingStars={floatingStars}
+          theme={theme}
+          readerMode={activeProfile.readerMode}
+          showDots={sessionShowDots}
           onDigit={handleDigit}
           onBackspace={handleBackspace}
           onSubmit={handleSubmit}
@@ -1123,6 +1703,7 @@ export default function MathGame() {
         <SessionCompleteScreen
           result={sessionResult}
           level={activeLevel}
+          theme={theme}
           onContinue={() => {
             if (sessionResult.mastered) {
               const nextLevel = getLevelById(activeLevelId + 1)
@@ -1138,6 +1719,15 @@ export default function MathGame() {
             }
           }}
           onRetry={() => startSession(activeLevelId)}
+          onNextLevel={() => {
+            const nextId = activeLevelId + 1
+            const nextLevel = getLevelById(nextId)
+            if (nextLevel) {
+              startSession(nextId)
+            } else {
+              setScreen('home')
+            }
+          }}
         />
       )}
 
@@ -1146,6 +1736,7 @@ export default function MathGame() {
         <LevelCompleteScreen
           level={activeLevel}
           nextLevel={getLevelById(activeLevelId + 1) ?? null}
+          theme={theme}
           onContinue={() => {
             const nextId = activeLevelId + 1
             const nextLevel = getLevelById(nextId)

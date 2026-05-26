@@ -29,7 +29,32 @@ export interface GameSave {
   totalCorrectAnswers: number
 }
 
+// ─────────────────────────────────────────────────────────────
+// Adaptive difficulty state — stored per profile per level
+// ─────────────────────────────────────────────────────────────
+
+export interface AdaptiveState {
+  /** Additive offset on Level.maxOperand. Default 0, range [-2, +3]. */
+  maxOperandOffset: number
+  /** ISO timestamp of last session that updated this state. */
+  lastUpdated: string
+}
+
+// ─────────────────────────────────────────────────────────────
+// Multi-profile save
+// ─────────────────────────────────────────────────────────────
+
+export interface ProfileSave extends GameSave {
+  profileId: string
+  profileName: string
+  themeKey: string       // key matching a Theme in PRESET_THEMES
+  readerMode: boolean    // true → show story sentences wrapping problems
+  adaptiveState: Record<number, AdaptiveState>  // keyed by level ID
+}
+
 const SAVE_KEY = 'kumon_home_v1'
+const PROFILES_KEY = 'kumon_profiles_v1'
+const ACTIVE_PROFILE_KEY = 'kumon_active_profile'
 
 const DEFAULT_SAVE: GameSave = {
   version: 1,
@@ -43,6 +68,8 @@ const DEFAULT_SAVE: GameSave = {
   totalProblemsAnswered: 0,
   totalCorrectAnswers: 0,
 }
+
+// ─── Legacy single-profile API (kept for reference; superceded by profiles) ───
 
 export function loadGame(): GameSave {
   if (typeof window === 'undefined') return { ...DEFAULT_SAVE }
@@ -70,8 +97,89 @@ export function resetGame(): GameSave {
   return fresh
 }
 
-// Update streak based on today's date
-export function updateStreak(save: GameSave): GameSave {
+// ─── Multi-profile API ────────────────────────────────────────
+
+/**
+ * Load all profiles from localStorage.
+ * Migration: if no profiles exist yet but an old single-profile save does,
+ * wrap it as profiles[0]. `highestUnlockedLevel` is copied verbatim — it may
+ * be 11 (all-levels-done sentinel) and must NOT be clamped.
+ */
+export function loadProfiles(): ProfileSave[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(PROFILES_KEY)
+    if (raw) {
+      const parsed: ProfileSave[] = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+
+    // Migration path: existing single-profile save → profiles[0]
+    const legacy = localStorage.getItem(SAVE_KEY)
+    if (legacy) {
+      const parsed = JSON.parse(legacy)
+      const migrated: ProfileSave = {
+        ...DEFAULT_SAVE,
+        ...parsed,
+        profileId: 'profile-legacy',
+        profileName: 'Player',
+        themeKey: 'dinosaurs',
+        readerMode: false,
+        adaptiveState: {},
+      }
+      saveProfiles([migrated])
+      return [migrated]
+    }
+
+    return []
+  } catch {
+    return []
+  }
+}
+
+export function saveProfiles(profiles: ProfileSave[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles))
+  } catch {
+    // storage full or private browsing — silently ignore
+  }
+}
+
+export function getActiveProfileId(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(ACTIVE_PROFILE_KEY)
+}
+
+export function setActiveProfileId(id: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(ACTIVE_PROFILE_KEY, id)
+  } catch {
+    // silently ignore
+  }
+}
+
+/** Create a fresh ProfileSave with sane defaults. */
+export function createProfile(
+  name: string,
+  themeKey: string,
+  readerMode: boolean
+): ProfileSave {
+  return {
+    ...DEFAULT_SAVE,
+    profileId: `profile-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    profileName: name,
+    themeKey,
+    readerMode,
+    adaptiveState: {},
+  }
+}
+
+// ─── Streak ───────────────────────────────────────────────────
+
+/** Update streak based on today's date. Generic so it works with ProfileSave too. */
+export function updateStreak<T extends GameSave>(save: T): T {
   const today = new Date().toISOString().slice(0, 10)
   if (save.lastPlayDate === today) {
     // Already played today — streak unchanged
@@ -81,6 +189,8 @@ export function updateStreak(save: GameSave): GameSave {
   const newStreak = save.lastPlayDate === yesterday ? save.streak + 1 : 1
   return { ...save, streak: newStreak, lastPlayDate: today }
 }
+
+// ─── Achievements ─────────────────────────────────────────────
 
 // All possible achievements
 export const ALL_ACHIEVEMENTS: Achievement[] = [
