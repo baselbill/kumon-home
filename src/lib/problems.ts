@@ -1,4 +1,6 @@
 import { Level, LevelType } from './curriculum'
+import type { Theme } from './themes'
+import type { AdaptiveState } from './storage'
 
 export interface Problem {
   id: string
@@ -12,6 +14,7 @@ export interface Problem {
 
 // Generate a random integer between min and max (inclusive)
 function randInt(min: number, max: number): number {
+  if (max < min) return min
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
@@ -48,14 +51,15 @@ function generateAddition(level: Level): Problem {
   }
 }
 
+/**
+ * Generate a subtraction problem.
+ * Bug fix: the original while-loop condition (a > level.maxOperand) was always
+ * false since a = randInt(2, maxOperand). Removed the dead loop — b < a is
+ * already guaranteed by construction.
+ */
 function generateSubtraction(level: Level): Problem {
-  let a: number, b: number
-  let attempts = 0
-  do {
-    a = randInt(2, level.maxOperand)
-    b = randInt(1, a - 1)  // ensure positive result, no zero answers
-    attempts++
-  } while (a > level.maxOperand && attempts < 100)
+  const a = randInt(2, Math.max(2, level.maxOperand))
+  const b = randInt(1, a - 1)  // b < a → answer > 0, answer ≠ 0
 
   return {
     id: Math.random().toString(36).slice(2),
@@ -88,15 +92,68 @@ export function generateProblem(level: Level): Problem {
 }
 
 /**
- * Generate a full session of problems for a level.
- * We shuffle so the same numbers don't appear consecutively.
+ * Wrap a problem in a story sentence for reader-mode profiles.
+ * Critical invariant: numbers come ONLY from problem fields — never generated
+ * here. The template writes words around the numbers, never produces them.
  */
-export function generateSession(level: Level): Problem[] {
+export function narrate(problem: Problem, theme: Theme): string {
+  if (problem.type === 'counting') {
+    return `How many ${theme.plural} do you see?`
+  }
+
+  const op2 = problem.operand2 ?? 0
+
+  if (problem.type === 'addition' || problem.operator === '+') {
+    return `${problem.operand1} ${theme.plural} found ${op2} more. How many ${theme.plural} now?`
+  }
+
+  if (problem.type === 'subtraction' || problem.operator === '-') {
+    return `${problem.operand1} ${theme.plural} were playing. ${op2} went home. How many ${theme.plural} are left?`
+  }
+
+  // Fallback (shouldn't be reached)
+  return `${problem.operand1} ${problem.operator} ${op2} = ?`
+}
+
+/**
+ * Generate a full session of problems for a level.
+ *
+ * Applies the AdaptiveState offset to level.maxOperand at generation time.
+ * Does NOT mutate the passed Level object — the adjusted level is internal.
+ *
+ * Returns both the problems array and the effective showDots value (which may
+ * differ from level.showDots when adaptive difficulty re-enables dot hints).
+ *
+ * maxAnswer cap: effectiveMaxOperand is capped at level.maxAnswer - 1 to
+ * prevent impossible combinations in the generation loops.
+ */
+export function generateSession(
+  level: Level,
+  adaptive?: AdaptiveState
+): { problems: Problem[]; showDots: boolean } {
+  const offset = adaptive?.maxOperandOffset ?? 0
+
+  // Cap between 2 (subtraction needs at least a=2) and maxAnswer-1
+  const effectiveMaxOperand = Math.max(
+    2,
+    Math.min(level.maxOperand + offset, level.maxAnswer - 1)
+  )
+
+  // Re-enable dots when difficulty is reduced below the level's baseline
+  const effectiveShowDots = level.showDots || offset < 0
+
+  const effectiveLevel: Level = {
+    ...level,
+    maxOperand: effectiveMaxOperand,
+    showDots: effectiveShowDots,
+  }
+
   const problems: Problem[] = []
   for (let i = 0; i < level.problemsPerSession; i++) {
-    problems.push(generateProblem(level))
+    problems.push(generateProblem(effectiveLevel))
   }
-  return problems
+
+  return { problems, showDots: effectiveShowDots }
 }
 
 /** Format a problem as a human-readable string, e.g. "3 + 4 = ?" */
