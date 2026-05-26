@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { getStartingLevel } from '../curriculum'
 import { narrate, generateSession, generateProblem } from '../problems'
 import type { Problem } from '../problems'
 import type { Level } from '../curriculum'
@@ -290,6 +291,65 @@ describe('generateProblem()', () => {
     for (let i = 0; i < 50; i++) {
       const p = generateProblem(level)
       expect(p.answer).toBeLessThanOrEqual(level.maxAnswer)
+    }
+  })
+})
+
+// ── getStartingLevel() ───────────────────────────────────────────────────────
+
+describe('getStartingLevel()', () => {
+  it('age ≤ 4 → level 1', () => {
+    expect(getStartingLevel(4)).toBe(1)
+    expect(getStartingLevel(3)).toBe(1)
+    expect(getStartingLevel(1)).toBe(1)
+  })
+
+  it('age 5 → level 2', () => {
+    expect(getStartingLevel(5)).toBe(2)
+  })
+
+  it('age 6 → level 3', () => {
+    expect(getStartingLevel(6)).toBe(3)
+  })
+
+  it('age 7 → level 5', () => {
+    expect(getStartingLevel(7)).toBe(5)
+  })
+
+  it('age 8 → level 7', () => {
+    expect(getStartingLevel(8)).toBe(7)
+  })
+
+  it('age 9 → level 9', () => {
+    expect(getStartingLevel(9)).toBe(9)
+  })
+
+  it('age 10 → level 10 (top of curriculum)', () => {
+    expect(getStartingLevel(10)).toBe(10)
+  })
+
+  it('age 12 → level 10 (curriculum ceiling)', () => {
+    expect(getStartingLevel(12)).toBe(10)
+  })
+
+  it('age 16 → level 10 (curriculum ceiling)', () => {
+    expect(getStartingLevel(16)).toBe(10)
+  })
+
+  it('always returns a value between 1 and TOTAL_LEVELS inclusive', () => {
+    for (let age = 1; age <= 20; age++) {
+      const level = getStartingLevel(age)
+      expect(level).toBeGreaterThanOrEqual(1)
+      expect(level).toBeLessThanOrEqual(10)
+    }
+  })
+
+  it('starting level is non-decreasing with age', () => {
+    let prev = getStartingLevel(1)
+    for (let age = 2; age <= 20; age++) {
+      const cur = getStartingLevel(age)
+      expect(cur).toBeGreaterThanOrEqual(prev)
+      prev = cur
     }
   })
 })

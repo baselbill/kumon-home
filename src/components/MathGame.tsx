@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react'
-import { CURRICULUM, getLevelById, Level, TOTAL_LEVELS } from '@/lib/curriculum'
+import { CURRICULUM, getLevelById, getStartingLevel, Level, TOTAL_LEVELS } from '@/lib/curriculum'
 import { Problem, generateSession, narrate } from '@/lib/problems'
 import {
   LevelProgress,
@@ -415,14 +415,17 @@ function ProfileCreator({
   onDone,
   onCancel,
 }: {
-  onDone: (name: string, themeKey: string, readerMode: boolean) => void
+  onDone: (name: string, themeKey: string, readerMode: boolean, age?: number) => void
   onCancel?: () => void
 }) {
   const [name, setName] = useState('')
   const [themeKey, setThemeKey] = useState(PRESET_THEMES[0].key)
   const [readerMode, setReaderMode] = useState(false)
+  const [age, setAge] = useState<number | null>(null)
 
   const selectedTheme = PRESET_THEMES.find(t => t.key === themeKey) ?? PRESET_THEMES[0]
+  const startLevel = age != null ? getStartingLevel(age) : null
+  const startLevelName = startLevel != null ? (getLevelById(startLevel)?.name ?? 'Math Master') : null
 
   return (
     <div className="flex flex-col gap-5 p-6 max-w-sm mx-auto">
@@ -444,6 +447,45 @@ function ProfileCreator({
           className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400"
           autoComplete="off"
         />
+      </div>
+
+      {/* Age stepper — sets the starting level */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Age{' '}
+          <span className="text-gray-400 font-normal">(optional — skips too-easy levels)</span>
+        </label>
+        <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+          <button
+            onClick={() => setAge(a => a == null ? null : Math.max(4, a - 1))}
+            disabled={age == null || age <= 4}
+            className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-xl font-bold text-gray-600 flex items-center justify-center active:scale-95 disabled:opacity-30"
+          >−</button>
+          <div className="flex-1 text-center">
+            {age != null ? (
+              <span className="text-3xl font-bold text-gray-800">{age}</span>
+            ) : (
+              <button
+                onClick={() => setAge(6)}
+                className="text-sm text-purple-500 font-semibold underline underline-offset-2"
+              >
+                Tap to set age
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setAge(a => Math.min(16, (a ?? 5) + 1))}
+            disabled={age != null && age >= 16}
+            className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-xl font-bold text-gray-600 flex items-center justify-center active:scale-95 disabled:opacity-30"
+          >+</button>
+        </div>
+        <div className="mt-1.5 text-center text-xs min-h-[1.1rem]">
+          {startLevelName != null ? (
+            <span className="text-purple-600 font-medium">Starts at: {startLevelName}</span>
+          ) : (
+            <span className="text-gray-400">Starts at level 1 if age not set</span>
+          )}
+        </div>
       </div>
 
       {/* Theme picker — emoji grid, no reading required */}
@@ -482,7 +524,7 @@ function ProfileCreator({
       <button
         onClick={() => {
           const trimmed = name.trim()
-          if (trimmed) onDone(trimmed, themeKey, readerMode)
+          if (trimmed) onDone(trimmed, themeKey, readerMode, age ?? undefined)
         }}
         disabled={!name.trim()}
         className="w-full py-4 text-xl font-bold rounded-2xl text-white bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform shadow-lg"
@@ -1580,8 +1622,9 @@ export default function MathGame() {
     return (
       <div className="relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden">
         <ProfileCreator
-          onDone={(name, themeKey, readerMode) => {
-            const newProfile = createProfile(name, themeKey, readerMode)
+          onDone={(name, themeKey, readerMode, age) => {
+            const newProfile = createProfile(name, themeKey, readerMode,
+              age != null ? getStartingLevel(age) : 1)
             const newProfiles = [newProfile]
             setProfiles(newProfiles)
             saveProfiles(newProfiles)
@@ -1633,8 +1676,9 @@ export default function MathGame() {
       {/* ── Profile Create ── */}
       {subScreen === 'profile-create' && (
         <ProfileCreator
-          onDone={(name, themeKey, readerMode) => {
-            const newProfile = createProfile(name, themeKey, readerMode)
+          onDone={(name, themeKey, readerMode, age) => {
+            const newProfile = createProfile(name, themeKey, readerMode,
+              age != null ? getStartingLevel(age) : 1)
             const newProfiles = [...profiles, newProfile]
             setProfiles(newProfiles)
             saveProfiles(newProfiles)

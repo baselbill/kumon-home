@@ -160,14 +160,22 @@ export function setActiveProfileId(id: string): void {
   }
 }
 
-/** Create a fresh ProfileSave with sane defaults. */
+/**
+ * Create a fresh ProfileSave with sane defaults.
+ *
+ * @param startingLevel  highestUnlockedLevel to begin at (default 1).
+ *   Pass getStartingLevel(age) from curriculum.ts to give age-appropriate access.
+ *   Levels below startingLevel are automatically accessible on first play.
+ */
 export function createProfile(
   name: string,
   themeKey: string,
-  readerMode: boolean
+  readerMode: boolean,
+  startingLevel = 1
 ): ProfileSave {
   return {
     ...DEFAULT_SAVE,
+    highestUnlockedLevel: Math.max(1, startingLevel),
     profileId: `profile-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     profileName: name,
     themeKey,

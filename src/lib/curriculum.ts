@@ -170,3 +170,28 @@ export function getLevelById(id: number): Level | undefined {
 }
 
 export const TOTAL_LEVELS = CURRICULUM.length
+
+/**
+ * Map a child's age to an appropriate starting highestUnlockedLevel.
+ * Conservative by one level so the first session is a confidence builder,
+ * not a wall. Ages 10+ map to level 10 (Math Master) — the full curriculum
+ * is unlocked and they begin at the top.
+ *
+ * Age → Level
+ *  ≤4 → 1  (Count to 5)
+ *   5 → 2  (Count to 10)
+ *   6 → 3  (Add to 5)
+ *   7 → 5  (Add to 10 — fast, no dots)
+ *   8 → 7  (Subtract from 5)
+ *   9 → 9  (Subtract from 20)
+ *  10+ → 10 (Math Master — all levels accessible)
+ */
+export function getStartingLevel(age: number): number {
+  if (age <= 4) return 1
+  if (age === 5) return 2
+  if (age === 6) return 3
+  if (age === 7) return 5
+  if (age === 8) return 7
+  if (age === 9) return 9
+  return 10
+}
