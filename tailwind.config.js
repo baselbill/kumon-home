@@ -7,11 +7,21 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // Design system typeface — see DESIGN.md
+        sans: ['var(--font-nunito)', 'Nunito', 'system-ui', 'sans-serif'],
+      },
       colors: {
         cream: '#FFFBEB',
-        'kid-blue': '#3B82F6',
-        'kid-green': '#22C55E',
-        'kid-red': '#EF4444',
+        // Primary interactive accent (Play! button, active states)
+        primary: {
+          DEFAULT: '#4F46E5',
+          dark:    '#3730A3',
+        },
+        // Semantic colours (unchanged)
+        'kid-blue':   '#3B82F6',
+        'kid-green':  '#22C55E',
+        'kid-red':    '#EF4444',
         'kid-yellow': '#FBBF24',
         'kid-purple': '#8B5CF6',
         'kid-orange': '#F97316',
