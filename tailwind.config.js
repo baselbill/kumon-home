@@ -12,11 +12,12 @@ module.exports = {
         sans: ['var(--font-nunito)', 'Nunito', 'system-ui', 'sans-serif'],
       },
       colors: {
-        cream: '#FFFBEB',
-        // Primary interactive accent (Play! button, active states)
+        // Brand background — now dark (Midnight Clarity direction)
+        cream: '#0F172A',
+        // Primary interactive accent — amber on dark (approved 2026-05-27)
         primary: {
-          DEFAULT: '#4F46E5',
-          dark:    '#3730A3',
+          DEFAULT: '#FBBF24',
+          dark:    '#F59E0B',
         },
         // Semantic colours (unchanged)
         'kid-blue':   '#3B82F6',

@@ -250,7 +250,7 @@ function NumberPad({
           key={d}
           onClick={() => handleDigit(d)}
           disabled={disabled}
-          className={`${btn} bg-blue-500 hover:bg-blue-600 text-4xl h-16`}
+          className={`${btn} bg-slate-700 hover:bg-slate-600 text-slate-100 border border-white/10 text-4xl h-16`}
           style={{ fontSize: '1.8rem' }}
         >
           {d}
@@ -259,14 +259,14 @@ function NumberPad({
       <button
         onClick={handleBack}
         disabled={disabled}
-        className={`${btn} bg-gray-400 hover:bg-gray-500 h-16 text-2xl`}
+        className={`${btn} bg-slate-700 hover:bg-slate-600 text-slate-400 border border-white/10 h-16 text-2xl`}
       >
         ⌫
       </button>
       <button
         onClick={() => handleDigit(0)}
         disabled={disabled}
-        className={`${btn} bg-blue-500 hover:bg-blue-600 h-16`}
+        className={`${btn} bg-slate-700 hover:bg-slate-600 text-slate-100 border border-white/10 h-16`}
         style={{ fontSize: '1.8rem' }}
       >
         0
@@ -274,7 +274,7 @@ function NumberPad({
       <button
         onClick={handleOk}
         disabled={disabled}
-        className={`${btn} bg-green-500 hover:bg-green-600 h-16 text-2xl`}
+        className={`${btn} bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/40 h-16 text-2xl`}
       >
         ✓
       </button>
@@ -295,7 +295,7 @@ function ProgressDots({ total, current }: { total: number; current: number }) {
           style={{
             width: total > 15 ? 10 : 14,
             height: total > 15 ? 10 : 14,
-            backgroundColor: i < current ? '#22C55E' : i === current ? '#FBBF24' : '#D1D5DB',
+            backgroundColor: i < current ? '#22C55E' : i === current ? '#FBBF24' : 'rgba(255,255,255,0.12)',
           }}
         />
       ))}
@@ -360,7 +360,7 @@ function AchievementToast({
 
   return (
     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
-      <div className="bg-yellow-400 text-gray-900 rounded-2xl px-6 py-4 shadow-xl flex items-center gap-3 border-2 border-yellow-600">
+      <div className="bg-amber-400 text-slate-900 rounded-2xl px-6 py-4 shadow-xl flex items-center gap-3 border-2 border-amber-600">
         <span className="text-3xl">{achievement.icon}</span>
         <div>
           <div className="font-bold text-lg leading-tight">Achievement unlocked!</div>
@@ -401,7 +401,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
   return (
     <button
       onClick={() => onChange(!on)}
-      className={`w-12 h-7 rounded-full transition-all relative flex-shrink-0 ${on ? 'bg-purple-500' : 'bg-gray-300'}`}
+      className={`w-12 h-7 rounded-full transition-all relative flex-shrink-0 ${on ? 'bg-purple-500' : 'bg-slate-600'}`}
       role="switch"
       aria-checked={on}
     >
@@ -435,43 +435,43 @@ function ProfileCreator({
     <div className="flex flex-col gap-5 p-6 max-w-sm mx-auto">
       {/* Header */}
       <div className="text-center">
-        <div className="text-2xl font-bold text-gray-800">Add a Player</div>
-        <div className="text-sm text-gray-500 mt-1">Parents set this up</div>
+        <div className="text-2xl font-bold text-slate-100">Add a Player</div>
+        <div className="text-sm text-slate-400 mt-1">Parents set this up</div>
       </div>
 
       {/* Name input */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">Player name</label>
+        <label className="block text-sm font-semibold text-slate-300 mb-1">Player name</label>
         <input
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="e.g. Emma"
           maxLength={20}
-          className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400"
+          className="w-full bg-slate-700 border-2 border-slate-600 text-slate-100 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-amber-400"
           autoComplete="off"
         />
       </div>
 
       {/* Age stepper — sets the starting level */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-slate-300 mb-2">
           Age{' '}
-          <span className="text-gray-400 font-normal">(optional — skips too-easy levels)</span>
+          <span className="text-slate-500 font-normal">(optional — skips too-easy levels)</span>
         </label>
-        <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+        <div className="flex items-center gap-3 bg-slate-700/50 rounded-xl p-3">
           <button
             onClick={() => setAge(a => a == null ? null : Math.max(4, a - 1))}
             disabled={age == null || age <= 4}
-            className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-xl font-bold text-gray-600 flex items-center justify-center active:scale-95 disabled:opacity-30"
+            className="w-10 h-10 rounded-full bg-slate-700 border-2 border-slate-600 text-xl font-bold text-slate-100 flex items-center justify-center active:scale-95 disabled:opacity-30"
           >−</button>
           <div className="flex-1 text-center">
             {age != null ? (
-              <span className="text-3xl font-bold text-gray-800">{age}</span>
+              <span className="text-3xl font-bold text-slate-100">{age}</span>
             ) : (
               <button
                 onClick={() => setAge(6)}
-                className="text-sm text-purple-500 font-semibold underline underline-offset-2"
+                className="text-sm text-amber-400 font-semibold underline underline-offset-2"
               >
                 Tap to set age
               </button>
@@ -480,21 +480,21 @@ function ProfileCreator({
           <button
             onClick={() => setAge(a => Math.min(16, (a ?? 5) + 1))}
             disabled={age != null && age >= 16}
-            className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-xl font-bold text-gray-600 flex items-center justify-center active:scale-95 disabled:opacity-30"
+            className="w-10 h-10 rounded-full bg-slate-700 border-2 border-slate-600 text-xl font-bold text-slate-100 flex items-center justify-center active:scale-95 disabled:opacity-30"
           >+</button>
         </div>
         <div className="mt-1.5 text-center text-xs min-h-[1.1rem]">
           {startLevelName != null ? (
-            <span className="text-purple-600 font-medium">Starts at: {startLevelName}</span>
+            <span className="text-amber-400 font-medium">Starts at: {startLevelName}</span>
           ) : (
-            <span className="text-gray-400">Starts at level 1 if age not set</span>
+            <span className="text-slate-500">Starts at level 1 if age not set</span>
           )}
         </div>
       </div>
 
       {/* Theme picker — emoji grid, no reading required */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Choose a world</label>
+        <label className="block text-sm font-semibold text-slate-300 mb-2">Choose a world</label>
         <div className="grid grid-cols-4 gap-2">
           {PRESET_THEMES.map(t => (
             <button
@@ -502,24 +502,24 @@ function ProfileCreator({
               onClick={() => setThemeKey(t.key)}
               className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
                 themeKey === t.key
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 bg-white'
+                  ? 'border-amber-400 bg-amber-400/10'
+                  : 'bg-slate-700 border-slate-600'
               }`}
             >
               <span className="text-2xl">{t.mascot}</span>
-              <span className="text-xs font-medium text-gray-600 leading-tight text-center">{t.label}</span>
+              <span className="text-xs font-medium text-slate-300 leading-tight text-center">{t.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Reader mode toggle */}
-      <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+      <div className="flex items-center justify-between bg-slate-700/50 rounded-xl p-4">
         <div>
-          <div className="font-semibold text-gray-800">
+          <div className="font-semibold text-slate-100">
             Can {name.trim() || 'this player'} read yet?
           </div>
-          <div className="text-xs text-gray-500 mt-0.5">Adds story sentences</div>
+          <div className="text-xs text-slate-400 mt-0.5">Adds story sentences</div>
         </div>
         <Toggle on={readerMode} onChange={setReaderMode} />
       </div>
@@ -531,7 +531,7 @@ function ProfileCreator({
           if (trimmed) onDone(trimmed, themeKey, readerMode, age ?? undefined)
         }}
         disabled={!name.trim()}
-        className="w-full py-4 text-xl font-bold rounded-2xl text-white bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform shadow-lg"
+        className="w-full py-4 text-xl font-bold rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform shadow-lg"
       >
         Let&apos;s play! {selectedTheme.mascot}
       </button>
@@ -539,7 +539,7 @@ function ProfileCreator({
       {onCancel && (
         <button
           onClick={onCancel}
-          className="w-full py-2 text-sm font-semibold text-gray-400 hover:text-gray-600"
+          className="w-full py-2 text-sm font-semibold text-slate-500 hover:text-slate-300"
         >
           Cancel
         </button>
@@ -589,27 +589,27 @@ function ProfileEditor({
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-t-3xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
+        className="bg-slate-800 rounded-t-3xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="text-xl font-bold text-gray-800 mb-4">Edit Player</div>
+        <div className="text-xl font-bold text-slate-100 mb-4">Edit Player</div>
 
         {/* Name */}
         <div className="mb-4">
-          <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+          <label className="block text-sm font-semibold text-slate-300 mb-1">Name</label>
           <input
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
             maxLength={20}
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-2 text-base focus:outline-none focus:border-purple-400"
+            className="w-full bg-slate-700 border-2 border-slate-600 text-slate-100 rounded-xl px-4 py-2 text-base focus:outline-none focus:border-amber-400"
             autoComplete="off"
           />
         </div>
 
         {/* Theme grid */}
         <div className="mb-2">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">World</label>
+          <label className="block text-sm font-semibold text-slate-300 mb-2">World</label>
           <div className="grid grid-cols-4 gap-2">
             {PRESET_THEMES.map(t => (
               <button
@@ -617,18 +617,18 @@ function ProfileEditor({
                 onClick={() => { setThemeKey(t.key); setShowCustom(false) }}
                 className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all ${
                   themeKey === t.key && !showCustom
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 bg-white'
+                    ? 'border-amber-400 bg-amber-400/10'
+                    : 'bg-slate-700 border-slate-600'
                 }`}
               >
                 <span className="text-2xl">{t.mascot}</span>
-                <span className="text-xs font-medium text-gray-600 leading-tight text-center">{t.label}</span>
+                <span className="text-xs font-medium text-slate-300 leading-tight text-center">{t.label}</span>
               </button>
             ))}
           </div>
           <button
             onClick={() => setShowCustom(s => !s)}
-            className="mt-2 text-sm text-purple-600 font-semibold"
+            className="mt-2 text-sm text-amber-400 font-semibold"
           >
             {showCustom ? '▼' : '▶'} Custom theme
           </button>
@@ -638,19 +638,19 @@ function ProfileEditor({
               value={customText}
               onChange={e => setCustomText(e.target.value)}
               placeholder='e.g. "ninja cats" or "pirates"'
-              className="w-full mt-2 border-2 border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-purple-400"
+              className="w-full mt-2 bg-slate-700 border-2 border-slate-600 text-slate-100 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-amber-400"
               autoComplete="off"
             />
           )}
         </div>
 
         {/* Reader mode */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4 mb-4">
+        <div className="flex items-center justify-between bg-slate-700/50 rounded-xl p-4 mb-4">
           <div>
-            <div className="font-semibold text-gray-800">
+            <div className="font-semibold text-slate-100">
               Can {name.trim() || 'this player'} read yet?
             </div>
-            <div className="text-xs text-gray-500">Story sentences</div>
+            <div className="text-xs text-slate-400">Story sentences</div>
           </div>
           <Toggle on={readerMode} onChange={setReaderMode} />
         </div>
@@ -658,7 +658,7 @@ function ProfileEditor({
         {/* Save */}
         <button
           onClick={handleSave}
-          className="w-full py-3 text-lg font-bold rounded-2xl text-white bg-purple-500 hover:bg-purple-600 active:scale-95 transition-transform shadow mb-3"
+          className="w-full py-3 text-lg font-bold rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 active:scale-95 transition-transform shadow mb-3"
         >
           Save changes
         </button>
@@ -669,7 +669,7 @@ function ProfileEditor({
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2 rounded-xl border-2 border-gray-300 text-gray-600 font-semibold"
+                className="flex-1 py-2 rounded-xl border-2 border-slate-600 text-slate-300 font-semibold"
               >
                 Keep
               </button>
@@ -757,8 +757,8 @@ function HomeScreen({
               onMouseLeave={() => cancelLongPress(p.profileId)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 transition-all text-sm font-semibold select-none ${
                 isActive
-                  ? 'border-purple-500 bg-purple-100 text-purple-700'
-                  : 'border-gray-200 bg-white text-gray-600'
+                  ? 'border-amber-400/60 bg-amber-400/10 text-amber-400'
+                  : 'border-white/10 bg-white/5 text-slate-400'
               }`}
             >
               <span>{pTheme.mascot}</span>
@@ -768,14 +768,14 @@ function HomeScreen({
         })}
         <button
           onClick={onAddProfile}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-dashed border-gray-300 text-gray-400 text-sm hover:border-gray-400"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-dashed border-slate-600 text-slate-500 text-sm hover:border-slate-500"
         >
           + Add
         </button>
       </div>
 
       {/* Header */}
-      <div className="text-4xl font-bold text-purple-700 leading-tight mt-2">
+      <div className="text-4xl font-bold text-slate-100 leading-tight mt-2">
         Math Adventure!
       </div>
 
@@ -784,22 +784,22 @@ function HomeScreen({
 
       {/* Stats row */}
       <div className="flex gap-4 justify-center w-full">
-        <div className="flex-1 bg-yellow-100 border-2 border-yellow-300 rounded-2xl p-3">
+        <div className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-2xl p-3">
           <div className="text-2xl">⭐</div>
-          <div className="text-2xl font-bold text-yellow-600">{activeProfile.totalStars}</div>
-          <div className="text-xs text-gray-500">Stars</div>
+          <div className="text-2xl font-bold text-amber-400">{activeProfile.totalStars}</div>
+          <div className="text-xs text-slate-500">Stars</div>
         </div>
-        <div className="flex-1 bg-orange-100 border-2 border-orange-300 rounded-2xl p-3">
+        <div className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-2xl p-3">
           <div className="text-2xl">🔥</div>
-          <div className="text-2xl font-bold text-orange-500">{activeProfile.streak}</div>
-          <div className="text-xs text-gray-500">Day streak</div>
+          <div className="text-2xl font-bold text-amber-400">{activeProfile.streak}</div>
+          <div className="text-xs text-slate-500">Day streak</div>
         </div>
-        <div className="flex-1 bg-purple-100 border-2 border-purple-300 rounded-2xl p-3">
+        <div className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-2xl p-3">
           <div className="text-2xl">{highestLevel?.icon ?? '🏆'}</div>
-          <div className="text-2xl font-bold text-purple-600">
+          <div className="text-2xl font-bold text-amber-400">
             {allDone ? '✓' : activeProfile.highestUnlockedLevel}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-slate-500">
             {allDone ? 'Done!' : 'Level'}
           </div>
         </div>
@@ -808,7 +808,7 @@ function HomeScreen({
       {/* Current level card */}
       {!allDone && highestLevel && (
         <div
-          className="w-full rounded-2xl p-4 text-white shadow-lg"
+          className="w-full rounded-2xl p-4 text-white shadow-lg border border-white/10"
           style={{ backgroundColor: highestLevel.color }}
         >
           <div className="text-3xl mb-1">{highestLevel.icon}</div>
@@ -818,7 +818,7 @@ function HomeScreen({
       )}
 
       {allDone && (
-        <div className="w-full rounded-2xl p-4 bg-yellow-400 text-gray-900 shadow-lg">
+        <div className="w-full rounded-2xl p-4 bg-amber-400 text-slate-900 shadow-lg">
           <div className="text-3xl mb-1">🏆</div>
           <div className="font-bold text-lg">You finished all levels!</div>
           <div className="text-sm">{theme.celebrationLine}</div>
@@ -828,7 +828,7 @@ function HomeScreen({
       {/* Buttons */}
       <button
         onClick={onPlay}
-        className="w-full py-4 text-2xl font-bold rounded-2xl text-white shadow-lg bg-green-500 hover:bg-green-600 active:scale-95 transition-transform"
+        className="w-full py-4 text-2xl font-bold rounded-2xl shadow-lg bg-amber-400 hover:bg-amber-300 text-slate-900 active:scale-95 transition-transform"
       >
         {allDone ? '🔄 Play Again' : '▶ Play!'}
       </button>
@@ -836,19 +836,19 @@ function HomeScreen({
       <div className="flex gap-3 w-full">
         <button
           onClick={onSelectLevel}
-          className="flex-1 py-3 text-base font-bold rounded-xl text-white bg-blue-500 hover:bg-blue-600 active:scale-95 transition-transform"
+          className="flex-1 py-3 text-base font-bold rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95 transition-transform"
         >
           📚 Levels
         </button>
         <button
           onClick={onViewAchievements}
-          className="flex-1 py-3 text-base font-bold rounded-xl text-white bg-purple-500 hover:bg-purple-600 active:scale-95 transition-transform"
+          className="flex-1 py-3 text-base font-bold rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95 transition-transform"
         >
           🏅 Awards
         </button>
       </div>
 
-      <div className="text-xs text-gray-400 pb-2">
+      <div className="text-xs text-slate-600 pb-2">
         Hold an avatar to edit • Tap to switch player
       </div>
     </div>
@@ -871,7 +871,7 @@ function LevelSelectScreen({
     <div className="flex flex-col gap-4 p-4 w-full max-w-sm mx-auto">
       <div className="flex items-center gap-2">
         <button onClick={onBack} className="text-2xl p-2 rounded-xl active:scale-90 transition-transform">⬅</button>
-        <div className="text-2xl font-bold text-gray-700">Choose a Level</div>
+        <div className="text-2xl font-bold text-slate-100">Choose a Level</div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 pb-6">
@@ -886,11 +886,11 @@ function LevelSelectScreen({
               onClick={() => unlocked && onSelect(level.id)}
               disabled={!unlocked}
               className={`rounded-2xl p-4 text-left shadow transition-transform ${
-                unlocked ? 'active:scale-95 cursor-pointer' : 'opacity-40 cursor-not-allowed'
+                unlocked ? 'active:scale-95 cursor-pointer border border-white/[0.07]' : 'opacity-40 cursor-not-allowed'
               }`}
               style={{
-                backgroundColor: unlocked ? level.color : '#E5E7EB',
-                color: unlocked ? 'white' : '#9CA3AF',
+                backgroundColor: unlocked ? level.color : '#1E293B',
+                color: unlocked ? 'white' : '#475569',
               }}
             >
               <div className="text-3xl mb-1">{unlocked ? level.icon : '🔒'}</div>
@@ -919,7 +919,7 @@ function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileS
     <div className="flex flex-col gap-4 p-4 w-full max-w-sm mx-auto pb-8">
       <div className="flex items-center gap-2">
         <button onClick={onBack} className="text-2xl p-2 rounded-xl active:scale-90 transition-transform">⬅</button>
-        <div className="text-2xl font-bold text-gray-700">Achievements</div>
+        <div className="text-2xl font-bold text-slate-100">Achievements</div>
       </div>
       <div className="flex flex-col gap-3">
         {ALL_ACHIEVEMENTS.map(a => {
@@ -928,13 +928,13 @@ function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileS
             <div
               key={a.id}
               className={`flex items-center gap-3 rounded-2xl p-4 shadow ${
-                earned ? 'bg-yellow-50 border-2 border-yellow-300' : 'bg-gray-100 opacity-50'
+                earned ? 'bg-slate-700 border border-amber-400/30' : 'bg-slate-800 border border-slate-700 opacity-50'
               }`}
             >
               <div className="text-3xl">{earned ? a.icon : '🔒'}</div>
               <div>
-                <div className="font-bold text-gray-800">{a.name}</div>
-                <div className="text-sm text-gray-500">{a.description}</div>
+                <div className={`font-bold ${earned ? 'text-slate-100' : 'text-slate-500'}`}>{a.name}</div>
+                <div className={`text-sm ${earned ? 'text-slate-400' : 'text-slate-600'}`}>{a.description}</div>
               </div>
               {earned && <div className="ml-auto text-yellow-500 font-bold">✓</div>}
             </div>
@@ -949,13 +949,13 @@ function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileS
 // Problem equation display — handles all LevelType layouts
 // ─────────────────────────────────────────────────────────────
 function ProblemEquation({ problem }: { problem: Problem }) {
-  const big = 'text-5xl font-bold text-gray-800'
-  const opr = 'text-4xl font-bold text-gray-500 mx-3'
-  const eq  = 'text-4xl font-bold text-gray-400 mx-3'
+  const big = 'text-7xl font-bold text-slate-100'
+  const opr = 'text-5xl font-bold text-slate-400 mx-3'
+  const eq  = 'text-5xl font-bold text-slate-500 mx-3'
 
   if (problem.type === 'counting') {
     return (
-      <div className="text-center text-2xl font-bold text-gray-600 mb-2">
+      <div className="text-center text-2xl font-bold text-slate-300 mb-2">
         How many?
       </div>
     )
@@ -965,7 +965,7 @@ function ProblemEquation({ problem }: { problem: Problem }) {
     return (
       <div className="text-center mb-2 flex items-start justify-center gap-0.5">
         <span className={big}>{problem.operand1}</span>
-        <sup className="text-2xl font-bold text-gray-800 mt-1 ml-0.5">{problem.operand2}</sup>
+        <sup className="text-2xl font-bold text-slate-100 mt-1 ml-0.5">{problem.operand2}</sup>
         <span className={eq}>=</span>
       </div>
     )
@@ -974,7 +974,7 @@ function ProblemEquation({ problem }: { problem: Problem }) {
   if (problem.type === 'sqrt') {
     return (
       <div className="text-center mb-2">
-        <span className="text-5xl font-bold text-gray-800">√{problem.operand1}</span>
+        <span className="text-7xl font-bold text-slate-100">√{problem.operand1}</span>
         <span className={eq}>=</span>
       </div>
     )
@@ -994,8 +994,8 @@ function ProblemEquation({ problem }: { problem: Problem }) {
   if (problem.type === 'algebra' && problem.displayText) {
     return (
       <div className="text-center mb-2">
-        <div className="text-4xl font-bold text-gray-800">{problem.displayText}</div>
-        <div className="text-xl text-gray-500 mt-1">x = ?</div>
+        <div className="text-4xl font-bold text-slate-100">{problem.displayText}</div>
+        <div className="text-xl text-slate-400 mt-1">x = ?</div>
       </div>
     )
   }
@@ -1062,7 +1062,7 @@ function GameScreen({
           {level.icon} {level.name}
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 text-gray-400 text-sm font-mono font-semibold">
+          <div className="flex items-center gap-1 text-slate-500 text-sm font-mono font-semibold">
             ⏱ {formatDuration(elapsedSec * 1000)}
           </div>
           <div className="flex items-center gap-1 text-yellow-500 font-bold">
@@ -1077,9 +1077,9 @@ function GameScreen({
       {/* Problem card */}
       <div
         className={`rounded-3xl p-6 shadow-lg transition-all duration-200 ${
-          isCorrect ? 'bg-green-50 border-4 border-green-400' :
-          isWrong   ? 'bg-red-50 border-4 border-red-300' :
-          'bg-white border-4 border-gray-100'
+          isCorrect ? 'bg-green-500/10 border-4 border-green-500' :
+          isWrong   ? 'bg-red-500/10 border-4 border-red-500' :
+          'bg-slate-800 border-4 border-white/10'
         }`}
         style={{ minHeight: '200px', position: 'relative' }}
       >
@@ -1104,7 +1104,7 @@ function GameScreen({
 
         {/* Problem text: narrated sentence for readers, equation for non-readers */}
         {readerMode ? (
-          <div className="text-center text-xl font-semibold text-gray-700 mb-2 leading-snug">
+          <div className="text-center text-xl font-semibold text-slate-400 mb-2 leading-snug">
             {narrate(problem, theme)}
           </div>
         ) : (
@@ -1130,15 +1130,15 @@ function GameScreen({
 
       {/* Answer input display */}
       <div
-        className={`flex items-center justify-center rounded-2xl py-4 text-5xl font-bold border-4 transition-all ${
-          isCorrect ? 'border-green-400 bg-green-50 text-green-600' :
-          isWrong   ? 'border-red-300 bg-red-50 text-red-500' :
-          'border-blue-300 bg-white text-gray-800'
+        className={`flex items-center justify-center py-4 text-5xl font-bold border-b-4 bg-transparent transition-all ${
+          isCorrect ? 'border-green-500 text-green-400' :
+          isWrong   ? 'border-red-500 text-red-400' :
+          'border-amber-400 text-slate-100'
         }`}
         style={{ minHeight: '72px' }}
       >
         {userAnswer !== '' ? userAnswer : (
-          <span className="text-gray-300 text-3xl">?</span>
+          <span className="text-slate-600 text-3xl">?</span>
         )}
       </div>
 
@@ -1183,7 +1183,7 @@ function SessionCompleteScreen({
         {result.isPerfect ? '💎' : result.mastered ? '🎉' : '💪'}
       </div>
 
-      <div className="text-3xl font-bold text-gray-800">
+      <div className="text-3xl font-bold text-slate-100">
         {result.isPerfect
           ? 'Perfect Score!'
           : result.mastered
@@ -1193,19 +1193,19 @@ function SessionCompleteScreen({
 
       {/* Theme celebration line on mastery */}
       {result.mastered && (
-        <div className="text-lg font-semibold text-purple-600">
+        <div className="text-lg font-semibold text-amber-400">
           {theme.celebrationLine}
         </div>
       )}
 
       {/* Score card */}
-      <div className="w-full rounded-3xl bg-white shadow-lg p-5 border-2 border-gray-100">
+      <div className="w-full rounded-3xl bg-slate-800 shadow-lg p-5 border-2 border-white/10">
         <div className="text-6xl font-bold" style={{ color: level.color }}>
           {result.correct}/{result.total}
         </div>
-        <div className="text-gray-500 mt-1">{pct}% correct</div>
+        <div className="text-slate-400 mt-1">{pct}% correct</div>
 
-        <div className="mt-4 bg-gray-100 rounded-full h-4 overflow-hidden">
+        <div className="mt-4 bg-slate-700 rounded-full h-4 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
@@ -1214,18 +1214,18 @@ function SessionCompleteScreen({
             }}
           />
         </div>
-        <div className="text-sm text-gray-400 mt-1">Need {masteryPct}% to master this level</div>
+        <div className="text-sm text-slate-500 mt-1">Need {masteryPct}% to master this level</div>
       </div>
 
       {/* Timing stats */}
       {result.durationMs > 0 && (
-        <div className="w-full rounded-3xl bg-white shadow-lg p-5 border-2 border-gray-100">
+        <div className="w-full rounded-3xl bg-slate-800 shadow-lg p-5 border-2 border-white/10">
           {(() => {
             const speed = speedTier(result.avgResponseMs)
             return (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Speed</div>
+                  <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Speed</div>
                   <div
                     className="flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-sm font-bold"
                     style={{ backgroundColor: speed.color }}
@@ -1235,13 +1235,13 @@ function SessionCompleteScreen({
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center bg-gray-50 rounded-2xl p-3">
-                    <div className="text-2xl font-bold text-gray-700">{formatDuration(result.durationMs)}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">Total time</div>
+                  <div className="text-center bg-slate-700/50 rounded-2xl p-3">
+                    <div className="text-2xl font-bold text-slate-100">{formatDuration(result.durationMs)}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">Total time</div>
                   </div>
-                  <div className="text-center bg-gray-50 rounded-2xl p-3">
-                    <div className="text-2xl font-bold text-gray-700">{formatAvgTime(result.avgResponseMs)}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">Avg per problem</div>
+                  <div className="text-center bg-slate-700/50 rounded-2xl p-3">
+                    <div className="text-2xl font-bold text-slate-100">{formatAvgTime(result.avgResponseMs)}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">Avg per problem</div>
                   </div>
                 </div>
               </>
@@ -1251,20 +1251,20 @@ function SessionCompleteScreen({
       )}
 
       {/* Stars earned */}
-      <div className="flex items-center gap-2 text-2xl font-bold text-yellow-500">
+      <div className="flex items-center gap-2 text-2xl font-bold text-amber-400">
         +{result.starsEarned} ⭐ earned this session
       </div>
 
       {/* Adaptive "Level Up?" banner — only when mastery NOT triggered */}
       {result.adaptiveBanner && !result.mastered && (
-        <div className="w-full rounded-2xl bg-blue-50 border-2 border-blue-300 p-4">
-          <div className="font-bold text-blue-700">🚀 You&apos;re flying!</div>
-          <div className="text-sm text-blue-600 mt-0.5">
+        <div className="w-full rounded-2xl bg-slate-800 border-2 border-amber-400/40 p-4">
+          <div className="font-bold text-amber-400">🚀 You&apos;re flying!</div>
+          <div className="text-sm text-slate-400 mt-0.5">
             You were super fast and accurate. Ready to try the next level?
           </div>
           <button
             onClick={onNextLevel}
-            className="mt-3 w-full py-2 bg-blue-500 text-white font-bold rounded-xl active:scale-95 transition-transform"
+            className="mt-3 w-full py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold rounded-xl active:scale-95 transition-transform"
           >
             Try next level →
           </button>
@@ -1274,14 +1274,14 @@ function SessionCompleteScreen({
       {/* New achievements */}
       {result.newAchievements.length > 0 && (
         <div className="w-full">
-          <div className="text-sm font-semibold text-gray-500 mb-2">New achievements!</div>
+          <div className="text-sm font-semibold text-slate-500 mb-2">New achievements!</div>
           {result.newAchievements.map(id => {
             const a = ALL_ACHIEVEMENTS.find(x => x.id === id)
             if (!a) return null
             return (
-              <div key={id} className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2 mb-2">
+              <div key={id} className="flex items-center gap-2 bg-slate-700 border border-amber-400/30 rounded-xl p-2 mb-2">
                 <span className="text-2xl">{a.icon}</span>
-                <span className="font-bold text-sm">{a.name}</span>
+                <span className="font-bold text-sm text-slate-100">{a.name}</span>
               </div>
             )
           })}

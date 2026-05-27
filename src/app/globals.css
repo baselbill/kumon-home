@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --foreground: #1e293b;
-  --background: #fffbeb;
+  /* Midnight Clarity — dark direction approved 2026-05-27 */
+  --foreground: #f1f5f9;   /* slate-100 */
+  --background: #0f172a;   /* slate-900 */
+  --surface:    #1e293b;   /* slate-800 */
+  --border:     rgba(255,255,255,.07);
+  --primary:    #fbbf24;   /* amber-400 — warm CTA on dark */
+  --correct:    #22c55e;
+  --wrong:      #ef4444;
+  --star:       #fbbf24;
+  --muted:      #64748b;   /* slate-500 */
 }
 
 html, body {
@@ -80,3 +88,30 @@ body {
 .ping-once {
   animation: ping-once 0.6s ease-out forwards;
 }
+
+/* Midnight Clarity — Mascot float (from Soft Kingdom synthesis) */
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-10px) rotate(1deg); }
+}
+.mascot-float {
+  animation: mascot-float 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Slide-up entrance for stat cards / level tiles */
+@keyframes slide-up-fade {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.slide-up {
+  animation: slide-up-fade 0.35s ease-out both;
+}
+
+/* Stagger helpers */
+.stagger-1 { animation-delay: .05s; }
+.stagger-2 { animation-delay: .10s; }
+.stagger-3 { animation-delay: .15s; }
+.stagger-4 { animation-delay: .20s; }
+.stagger-5 { animation-delay: .25s; }
+.stagger-6 { animation-delay: .30s; }
