@@ -185,7 +185,7 @@ function DotsDisplay({ problem, theme }: { problem: Problem; theme: Theme }) {
             <span key={i} style={dotStyle}>{theme.dotEmoji}</span>
           ))}
         </div>
-        <span className="text-3xl font-bold text-gray-500">+</span>
+        <span className="text-3xl font-bold text-slate-500">+</span>
         <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: gridWidth }}>
           {Array.from({ length: problem.operand2 }).map((_, i) => (
             <span key={i} style={dotStyle}>{theme.dotEmoji}</span>
@@ -207,7 +207,7 @@ function DotsDisplay({ problem, theme }: { problem: Problem; theme: Theme }) {
             </span>
           ))}
         </div>
-        <span className="text-3xl font-bold text-gray-500">−</span>
+        <span className="text-3xl font-bold text-slate-500">−</span>
         <div className="flex flex-wrap gap-1 justify-center" style={{ maxWidth: gridWidth }}>
           {Array.from({ length: problem.operand2 }).map((_, i) => (
             <span key={i} style={dotStyle}>❌</span>
@@ -1292,7 +1292,7 @@ function SessionCompleteScreen({
       {result.mastered ? (
         <button
           onClick={onContinue}
-          className="w-full py-4 text-2xl font-bold rounded-2xl text-white bg-green-500 hover:bg-green-600 active:scale-95 transition-transform shadow-lg"
+          className="w-full py-4 text-2xl font-bold rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 active:scale-95 transition-transform shadow-lg"
         >
           Next Level! →
         </button>
@@ -1300,13 +1300,13 @@ function SessionCompleteScreen({
         <div className="flex gap-3 w-full">
           <button
             onClick={onRetry}
-            className="flex-1 py-4 text-xl font-bold rounded-2xl text-white bg-orange-500 hover:bg-orange-600 active:scale-95 transition-transform shadow"
+            className="flex-1 py-4 text-xl font-bold rounded-2xl bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95 transition-transform shadow"
           >
             Try Again
           </button>
           <button
             onClick={onContinue}
-            className="flex-1 py-4 text-xl font-bold rounded-2xl text-white bg-blue-500 hover:bg-blue-600 active:scale-95 transition-transform shadow"
+            className="flex-1 py-4 text-xl font-bold rounded-2xl bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95 transition-transform shadow"
           >
             Home
           </button>
@@ -1338,13 +1338,13 @@ function LevelCompleteScreen({
     <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto text-center">
       <Confetti />
       <div className="text-7xl mt-6 animate-bounce">{level.icon}</div>
-      <div className="text-3xl font-bold text-gray-800 animate-bounce-in">
+      <div className="text-3xl font-bold text-slate-100 animate-bounce-in">
         {level.unlockMessage}
       </div>
-      <div className="text-2xl font-bold text-purple-600">
+      <div className="text-2xl font-bold text-amber-400">
         {theme.celebrationLine}
       </div>
-      <div className="text-5xl font-bold text-yellow-500 animate-pulse-scale">
+      <div className="text-5xl font-bold text-amber-400 animate-pulse-scale">
         🏆 Level {level.id} Complete!
       </div>
 
@@ -1359,16 +1359,16 @@ function LevelCompleteScreen({
           <div className="text-sm opacity-90">{nextLevel.description}</div>
         </div>
       ) : (
-        <div className="w-full rounded-3xl p-5 bg-yellow-400 shadow-xl">
+        <div className="w-full rounded-3xl p-5 bg-amber-400 shadow-xl">
           <div className="text-4xl">🌟</div>
-          <div className="text-xl font-bold mt-1">You finished ALL levels!</div>
-          <div className="text-sm">You are a true Math Master!</div>
+          <div className="text-xl font-bold text-slate-900 mt-1">You finished ALL levels!</div>
+          <div className="text-sm text-slate-900">You are a true Math Master!</div>
         </div>
       )}
 
       <button
         onClick={onContinue}
-        className="w-full py-4 text-2xl font-bold rounded-2xl text-white bg-green-500 hover:bg-green-600 active:scale-95 transition-transform shadow-lg"
+        className="w-full py-4 text-2xl font-bold rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 active:scale-95 transition-transform shadow-lg"
       >
         {nextLevel ? `Let's go! ${nextLevel.icon}` : '🏠 Home'}
       </button>
