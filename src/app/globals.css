@@ -15,7 +15,7 @@ html, body {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+  font-family: var(--font-nunito), 'Nunito', system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
@@ -25,9 +25,9 @@ body {
   touch-action: manipulation;
 }
 
-/* Number pad button press effect */
+/* Number pad button press effect — scale(0.88) feels more physical/game-like */
 .numpad-btn:active {
-  transform: scale(0.92);
+  transform: scale(0.88);
 }
 
 /* Dot groups */

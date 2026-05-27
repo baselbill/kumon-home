@@ -491,7 +491,8 @@ describe('percentage generator', () => {
   it('answer = (operand1/100) × operand2 (whole number)', () => {
     for (let i = 0; i < 30; i++) {
       const p = generateProblem(L19)
-      expect(p.answer).toBe((p.operand1 / 100) * (p.operand2 ?? 0))
+      // Use Math.round to avoid floating-point drift (e.g. 63% of 100 = 62.999…)
+      expect(p.answer).toBe(Math.round((p.operand1 / 100) * (p.operand2 ?? 0)))
     }
   })
 

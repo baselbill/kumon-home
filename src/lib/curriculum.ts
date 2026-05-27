@@ -43,7 +43,7 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#22C55E',
+    color: '#F97316', // arc L1: orange (warm start)
     unlockMessage: 'You can count to 5! Amazing!',
   },
   {
@@ -57,7 +57,7 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#3B82F6',
+    color: '#FB923C', // arc L2: orange-amber
     unlockMessage: 'You can count to 10! Keep going!',
   },
   {
@@ -71,7 +71,7 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#F97316',
+    color: '#F59E0B', // arc L3: amber
     unlockMessage: 'You can add to 5! Incredible!',
   },
   {
@@ -85,7 +85,7 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#8B5CF6',
+    color: '#EAB308', // arc L4: yellow-amber
     unlockMessage: "Adding to 10 is easy for you!",
   },
   {
@@ -99,7 +99,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#FBBF24',
+    color: '#84CC16', // arc L5: lime (warm→nature transition)
     unlockMessage: 'Super fast adding! You rock!',
   },
   {
@@ -113,7 +113,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#EC4899',
+    color: '#22C55E', // arc L6: green
     unlockMessage: 'Adding to 20! You are a math star!',
   },
   {
@@ -127,7 +127,7 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#14B8A6',
+    color: '#10B981', // arc L7: emerald
     unlockMessage: 'Subtraction from 5 — nailed it!',
   },
   {
@@ -141,7 +141,7 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#6366F1',
+    color: '#14B8A6', // arc L8: teal
     unlockMessage: 'Subtraction hero! Amazing work!',
   },
   {
@@ -155,7 +155,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#EF4444',
+    color: '#06B6D4', // arc L9: cyan
     unlockMessage: 'Subtracting from 20! Wow!',
   },
   {
@@ -169,7 +169,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#F59E0B',
+    color: '#0EA5E9', // arc L10: sky (nature→cool transition)
     unlockMessage: 'YOU ARE A MATH MASTER! 🏆',
   },
 
@@ -187,7 +187,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#7C3AED',
+    color: '#3B82F6', // arc L11: blue
     unlockMessage: 'Times tables — off to a flying start! ⚡',
   },
   {
@@ -202,7 +202,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#0891B2',
+    color: '#6366F1', // arc L12: indigo
     unlockMessage: '×3 and ×4 mastered — nice work!',
   },
   {
@@ -216,7 +216,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#059669',
+    color: '#8B5CF6', // arc L13: violet
     unlockMessage: 'Full times tables — you nailed it! 🌟',
   },
   {
@@ -230,7 +230,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#D97706',
+    color: '#7C3AED', // arc L14: purple-violet
     unlockMessage: "Division pro — you're on a roll!",
   },
   {
@@ -244,7 +244,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#DC2626',
+    color: '#A855F7', // arc L15: purple
     unlockMessage: 'Big multiplication — absolutely crushed it!',
   },
   {
@@ -258,7 +258,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#7C3AED',
+    color: '#9333EA', // arc L16: deep purple
     unlockMessage: "Long division solved! You've got this!",
   },
 
@@ -275,7 +275,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#0369A1',
+    color: '#6D28D9', // arc L17: deeper violet
     unlockMessage: 'To the power of AMAZING!',
   },
   {
@@ -289,7 +289,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#65A30D',
+    color: '#4C1D95', // arc L18: very deep violet
     unlockMessage: 'Square roots — rooted in success! 🌱',
   },
   {
@@ -303,7 +303,7 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#BE185D',
+    color: '#3730A3', // arc L19: dark indigo
     unlockMessage: 'Percentage pro! Nothing can stop you!',
   },
   {

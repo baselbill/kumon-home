@@ -22,6 +22,7 @@ import {
   Achievement,
 } from '@/lib/storage'
 import { Theme, PRESET_THEMES, resolveTheme } from '@/lib/themes'
+import { formatDuration, formatAvgTime, speedTier } from '@/lib/timing'
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -48,7 +49,10 @@ interface SessionResult {
   starsEarned: number
   newAchievements: string[]
   adaptiveBanner: boolean  // show "Level Up?" hint (only when mastery NOT triggered)
+  durationMs: number       // total session wall-clock time
+  avgResponseMs: number    // mean response time across all attempts
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Sound effects via Web Audio API
@@ -1021,6 +1025,7 @@ function GameScreen({
   theme,
   readerMode,
   showDots,
+  elapsedSec,
   onDigit,
   onBackspace,
   onSubmit,
@@ -1035,6 +1040,7 @@ function GameScreen({
   theme: Theme
   readerMode: boolean
   showDots: boolean
+  elapsedSec: number
   onDigit: (d: number) => void
   onBackspace: () => void
   onSubmit: () => void
@@ -1055,8 +1061,13 @@ function GameScreen({
         >
           {level.icon} {level.name}
         </div>
-        <div className="flex items-center gap-1 text-yellow-500 font-bold">
-          ⭐ {sessionCorrect}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 text-gray-400 text-sm font-mono font-semibold">
+            ⏱ {formatDuration(elapsedSec * 1000)}
+          </div>
+          <div className="flex items-center gap-1 text-yellow-500 font-bold">
+            ⭐ {sessionCorrect}
+          </div>
         </div>
       </div>
 
@@ -1159,7 +1170,8 @@ function SessionCompleteScreen({
   onContinue: () => void
   onRetry: () => void
   onNextLevel: () => void
-}) {
+})
+ {
   const pct = Math.round((result.correct / result.total) * 100)
   const masteryPct = Math.round(level.masteryThreshold * 100)
 
@@ -1204,6 +1216,39 @@ function SessionCompleteScreen({
         </div>
         <div className="text-sm text-gray-400 mt-1">Need {masteryPct}% to master this level</div>
       </div>
+
+      {/* Timing stats */}
+      {result.durationMs > 0 && (
+        <div className="w-full rounded-3xl bg-white shadow-lg p-5 border-2 border-gray-100">
+          {(() => {
+            const speed = speedTier(result.avgResponseMs)
+            return (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Speed</div>
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-sm font-bold"
+                    style={{ backgroundColor: speed.color }}
+                  >
+                    <span>{speed.icon}</span>
+                    <span>{speed.label}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center bg-gray-50 rounded-2xl p-3">
+                    <div className="text-2xl font-bold text-gray-700">{formatDuration(result.durationMs)}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">Total time</div>
+                  </div>
+                  <div className="text-center bg-gray-50 rounded-2xl p-3">
+                    <div className="text-2xl font-bold text-gray-700">{formatAvgTime(result.avgResponseMs)}</div>
+                    <div className="text-xs text-gray-400 mt-0.5">Avg per problem</div>
+                  </div>
+                </div>
+              </>
+            )
+          })()}
+        </div>
+      )}
 
       {/* Stars earned */}
       <div className="flex items-center gap-2 text-2xl font-bold text-yellow-500">
@@ -1370,8 +1415,20 @@ export default function MathGame() {
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const starIdRef = useRef(0)
   const problemStartTime = useRef<number>(Date.now())
+  const sessionStartTimeRef = useRef<number>(Date.now())
   const sessionAttemptsRef = useRef<ProblemAttempt[]>([])
   const sessionCorrectRef = useRef(0)  // mirror of sessionCorrect for closure-safe endSession
+
+  // ── Live session timer ────────────────────────────────────
+  const [sessionElapsedSec, setSessionElapsedSec] = useState(0)
+
+  useEffect(() => {
+    if (screen !== 'playing') return
+    const interval = setInterval(() => {
+      setSessionElapsedSec(Math.floor((Date.now() - sessionStartTimeRef.current) / 1000))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [screen])
 
   // ── Profile helpers ───────────────────────────────────────
 
@@ -1434,6 +1491,8 @@ export default function MathGame() {
     setFloatingStars([])
     sessionAttemptsRef.current = []
     problemStartTime.current = Date.now()
+    sessionStartTimeRef.current = Date.now()
+    setSessionElapsedSec(0)
     setScreen('playing')
   }, [profiles, activeProfileId])
 
@@ -1634,6 +1693,12 @@ export default function MathGame() {
         setToastQueue(q => [...q, ...toasts])
       }
 
+      // ── Timing ────────────────────────────────────────────
+      const durationMs = Date.now() - sessionStartTimeRef.current
+      const avgResponseMs = attempts.length > 0
+        ? Math.round(attempts.reduce((s, a) => s + a.responseTimeMs, 0) / attempts.length)
+        : 0
+
       // ── Set result and advance screen ──────────────────────
       const result: SessionResult = {
         levelId: level.id,
@@ -1644,6 +1709,8 @@ export default function MathGame() {
         starsEarned,
         newAchievements: collectedNewAchIds,
         adaptiveBanner,
+        durationMs,
+        avgResponseMs,
       }
       setSessionResult(result)
       setScreen('session-complete')
@@ -1793,6 +1860,7 @@ export default function MathGame() {
           theme={theme}
           readerMode={activeProfile.readerMode}
           showDots={sessionShowDots}
+          elapsedSec={sessionElapsedSec}
           onDigit={handleDigit}
           onBackspace={handleBackspace}
           onSubmit={handleSubmit}
