@@ -8,10 +8,12 @@
 - **Memorable thing:** "Math feels like a game" — the first impression is play, not homework
 
 ## Aesthetic Direction
-- **Direction:** Sunshine Arcade — warm, bold, graphic. Not pastel-baby, not dark-gamer.
-- **Decoration level:** Intentional — clean surfaces with badge/card components that feel like game tiles. No gradients or texture except where needed for depth on cards.
-- **Mood:** Confident, warm, satisfying. Like a well-made mobile puzzle game. Duolingo-level polish with the warmth of the amber background.
-- **Research basis:** Prodigy, Khan Academy Kids, Duolingo, Mathletics reviewed. Competitors converge on white backgrounds + Fredoka + random accent colors. We differentiate on: warm amber background as brand identity, Nunito (not Fredoka), and a deliberate 20-level color arc.
+- **Direction:** Midnight Clarity — dark arcade energy, clean typographic structure, soft movements.
+- **Background:** `#0F172A` (slate-900) — dark navy, not void-black. Warm enough to feel inviting, dark enough to make the level arc colors glow.
+- **Decoration level:** Intentional — clean dark surfaces. No heavy neon borders. Level colors appear as accent bars and subtle glows, not full-bleed fills.
+- **Mood:** Confident, warm, game-like. Like Apple Arcade meets a kids' math app. The first impression is *real game*, not homework.
+- **Animation:** Mascots float gently. Stat cards slide-up on enter. Level tiles stagger in. These are the "Soft Kingdom" movements that make it feel alive — not static, not frantic.
+- **Design shotgun research basis:** Three directions explored (Midnight Arcade, Soft Kingdom, Sports Mode). Approved synthesis takes: dark atmosphere from A, clean lines from C, movements from B. Amber #FBBF24 as CTA was explicitly approved — it was the brand amber background, now flipped to work as a warm glow accent on dark.
 
 ## Typography — Nunito Variable (single font system)
 
@@ -23,7 +25,7 @@
 - **Body / Narration / Story sentences:** Nunito, weight 500–600
 - **Hints / Metadata:** Nunito, weight 400
 
-- **Problem numbers in game:** Nunito weight 800, `font-variant-numeric: tabular-nums` — numbers must align vertically, feel bold and unambiguous at large sizes (52–64px)
+- **Problem numbers in game:** Nunito weight 800, `font-variant-numeric: tabular-nums` — numbers must align vertically, feel bold and unambiguous at large sizes (72–80px on dark, numbers are the hero)
 - **Timer display:** Nunito weight 700, `font-variant-numeric: tabular-nums`
 
 **Loading:**
@@ -55,28 +57,18 @@ font-family: 'Nunito', system-ui, sans-serif;
 
 ### Core Palette
 
-| Token | Hex | Usage |
-|---|---|---|
-| `--bg` | `#FFFBEB` | Global background (amber-50) — brand identity, keep everywhere |
-| `--surface` | `#FFFFFF` | Cards, panels, problem card |
-| `--text` | `#1E293B` | Primary text (slate-800) |
-| `--text-muted` | `#64748B` | Labels, metadata, hints (slate-500) |
-| `--border` | `#E2E8F0` | Card borders, dividers (slate-200) |
-| `--primary` | `#4F46E5` | Play! button, checkmark, active chip, primary interactive (indigo-600) |
-| `--primary-dk` | `#3730A3` | App title, primary hover state (indigo-800) |
-| `--correct` | `#22C55E` | Correct feedback, progress bar fill, "Next Level!" button |
-| `--wrong` | `#EF4444` | Wrong feedback, error states |
-| `--star` | `#FBBF24` | Stars, streak, achievement borders |
-
-**Dark mode tokens** (for future implementation):
-
-| Token | Hex |
-|---|---|
-| `--bg` | `#0F172A` |
-| `--surface` | `#1E293B` |
-| `--text` | `#F1F5F9` |
-| `--text-muted` | `#94A3B8` |
-| `--border` | `#334155` |
+| Token | Hex | Tailwind | Usage |
+|---|---|---|---|
+| `--background` | `#0F172A` | `bg-slate-900` | Global background — dark navy |
+| `--surface` | `#1E293B` | `bg-slate-800` | Cards, panels, problem card |
+| `--foreground` | `#F1F5F9` | `text-slate-100` | Primary text |
+| `--muted` | `#64748B` | `text-slate-500` | Labels, metadata, hints |
+| `--border` | `rgba(255,255,255,.07)` | `border-white/[0.07]` | Card borders |
+| `--primary` | `#FBBF24` | `bg-amber-400` | Play! button, active chip, CTA (amber — warm on dark) |
+| `--primary-dk` | `#F59E0B` | `bg-amber-500` | Hover state |
+| `--correct` | `#22C55E` | `bg-green-500` | Correct feedback, Next Level button |
+| `--wrong` | `#EF4444` | `bg-red-500` | Wrong feedback |
+| `--star` | `#FBBF24` | `text-amber-400` | Stars, streak |
 
 ### 20-Level Color Arc
 
