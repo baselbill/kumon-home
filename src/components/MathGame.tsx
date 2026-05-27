@@ -36,7 +36,7 @@ interface ProblemAttempt {
   responseTimeMs: number
   operand1: number
   operand2: number | null
-  operator: '+' | '-' | null
+  operator: Problem['operator']
 }
 
 interface SessionResult {
@@ -942,6 +942,72 @@ function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileS
 }
 
 // ─────────────────────────────────────────────────────────────
+// Problem equation display — handles all LevelType layouts
+// ─────────────────────────────────────────────────────────────
+function ProblemEquation({ problem }: { problem: Problem }) {
+  const big = 'text-5xl font-bold text-gray-800'
+  const opr = 'text-4xl font-bold text-gray-500 mx-3'
+  const eq  = 'text-4xl font-bold text-gray-400 mx-3'
+
+  if (problem.type === 'counting') {
+    return (
+      <div className="text-center text-2xl font-bold text-gray-600 mb-2">
+        How many?
+      </div>
+    )
+  }
+
+  if (problem.type === 'exponent') {
+    return (
+      <div className="text-center mb-2 flex items-start justify-center gap-0.5">
+        <span className={big}>{problem.operand1}</span>
+        <sup className="text-2xl font-bold text-gray-800 mt-1 ml-0.5">{problem.operand2}</sup>
+        <span className={eq}>=</span>
+      </div>
+    )
+  }
+
+  if (problem.type === 'sqrt') {
+    return (
+      <div className="text-center mb-2">
+        <span className="text-5xl font-bold text-gray-800">√{problem.operand1}</span>
+        <span className={eq}>=</span>
+      </div>
+    )
+  }
+
+  if (problem.type === 'percentage') {
+    return (
+      <div className="text-center mb-2 flex items-center justify-center flex-wrap">
+        <span className={big}>{problem.operand1}%</span>
+        <span className={opr}>of</span>
+        <span className={big}>{problem.operand2}</span>
+        <span className={eq}>=</span>
+      </div>
+    )
+  }
+
+  if (problem.type === 'algebra' && problem.displayText) {
+    return (
+      <div className="text-center mb-2">
+        <div className="text-4xl font-bold text-gray-800">{problem.displayText}</div>
+        <div className="text-xl text-gray-500 mt-1">x = ?</div>
+      </div>
+    )
+  }
+
+  // Default: addition, subtraction, multiplication, division
+  return (
+    <div className="text-center mb-2">
+      <span className={big}>{problem.operand1}</span>
+      <span className={opr}>{problem.operator}</span>
+      {problem.operand2 !== null && <span className={big}>{problem.operand2}</span>}
+      <span className={eq}>=</span>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Game Screen (the main playing view)
 // ─────────────────────────────────────────────────────────────
 function GameScreen({
@@ -1030,17 +1096,8 @@ function GameScreen({
           <div className="text-center text-xl font-semibold text-gray-700 mb-2 leading-snug">
             {narrate(problem, theme)}
           </div>
-        ) : problem.type === 'counting' ? (
-          <div className="text-center text-2xl font-bold text-gray-600 mb-2">
-            How many?
-          </div>
         ) : (
-          <div className="text-center mb-2">
-            <span className="text-5xl font-bold text-gray-800">{problem.operand1}</span>
-            <span className="text-4xl font-bold text-gray-500 mx-3">{problem.operator}</span>
-            <span className="text-5xl font-bold text-gray-800">{problem.operand2}</span>
-            <span className="text-4xl font-bold text-gray-400 mx-3">=</span>
-          </div>
+          <ProblemEquation problem={problem} />
         )}
 
         {/* Themed dot display */}
@@ -1383,7 +1440,7 @@ export default function MathGame() {
   // ── Digit input ───────────────────────────────────────────
   const handleDigit = useCallback((d: number) => {
     setUserAnswer(prev => {
-      if (prev.length >= 2) return prev  // max 2 digits (answers ≤ 99)
+      if (prev.length >= 3) return prev  // max 3 digits (answers ≤ 999)
       return prev + String(d)
     })
   }, [])

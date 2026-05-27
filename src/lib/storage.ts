@@ -259,8 +259,14 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'level_10',
     name: 'Math Master',
-    description: 'Completed all 10 levels!',
+    description: 'Reached level 10!',
     icon: '🏆',
+  },
+  {
+    id: 'level_20',
+    name: 'Math Wizard',
+    description: 'Completed all 20 levels!',
+    icon: '🧙',
   },
   {
     id: 'sessions_10',
@@ -287,6 +293,7 @@ export function checkNewAchievements(save: GameSave): string[] {
   check('stars_200', save.totalStars >= 200)
   check('level_5', save.highestUnlockedLevel >= 5)
   check('level_10', save.highestUnlockedLevel > 10)
+  check('level_20', save.highestUnlockedLevel > 20)
   check('sessions_10', save.totalSessionsPlayed >= 10)
 
   return newOnes
