@@ -27,7 +27,7 @@ import { formatDuration, formatAvgTime, speedTier } from '@/lib/timing'
 // ─────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────
-type Screen = 'home' | 'level-select' | 'playing' | 'session-complete' | 'level-complete'
+type Screen = 'home' | 'level-select' | 'achievements' | 'playing' | 'session-complete' | 'level-complete'
 type SubScreen = 'none' | 'achievements' | 'profile-create' | 'profile-edit'
 type FeedbackState = 'none' | 'correct' | 'wrong'
 
@@ -702,8 +702,6 @@ function HomeScreen({
   activeProfile,
   theme,
   onPlay,
-  onSelectLevel,
-  onViewAchievements,
   onSwitchProfile,
   onAddProfile,
   onLongPressProfile,
@@ -712,8 +710,6 @@ function HomeScreen({
   activeProfile: ProfileSave
   theme: Theme
   onPlay: () => void
-  onSelectLevel: () => void
-  onViewAchievements: () => void
   onSwitchProfile: (id: string) => void
   onAddProfile: () => void
   onLongPressProfile: (profile: ProfileSave) => void
@@ -833,21 +829,6 @@ function HomeScreen({
         {allDone ? '🔄 Play Again' : '▶ Play!'}
       </button>
 
-      <div className="flex gap-3 w-full">
-        <button
-          onClick={onSelectLevel}
-          className="flex-1 py-3 text-base font-bold rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95 transition-transform"
-        >
-          📚 Levels
-        </button>
-        <button
-          onClick={onViewAchievements}
-          className="flex-1 py-3 text-base font-bold rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 active:scale-95 transition-transform"
-        >
-          🏅 Awards
-        </button>
-      </div>
-
       <div className="text-xs text-slate-600 pb-2">
         Hold an avatar to edit • Tap to switch player
       </div>
@@ -946,6 +927,45 @@ function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileS
 }
 
 // ─────────────────────────────────────────────────────────────
+// Bottom Navigation Bar — persistent tab bar for main screens
+// ─────────────────────────────────────────────────────────────
+function BottomNav({
+  active,
+  onHome,
+  onLevels,
+  onAwards,
+}: {
+  active: 'home' | 'levels' | 'awards'
+  onHome: () => void
+  onLevels: () => void
+  onAwards: () => void
+}) {
+  const items: { key: 'home' | 'levels' | 'awards'; icon: string; label: string; onClick: () => void }[] = [
+    { key: 'home',   icon: '🏠', label: 'Home',   onClick: onHome },
+    { key: 'levels', icon: '📚', label: 'Levels', onClick: onLevels },
+    { key: 'awards', icon: '🏅', label: 'Awards', onClick: onAwards },
+  ]
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
+      <div className="w-full max-w-sm bg-slate-900/95 backdrop-blur border-t border-white/[0.07] flex pointer-events-auto">
+        {items.map(({ key, icon, label, onClick }) => (
+          <button
+            key={key}
+            onClick={onClick}
+            className={`flex flex-col items-center gap-0.5 flex-1 py-3 transition-colors active:scale-95 ${
+              active === key ? 'text-amber-400' : 'text-slate-500 active:text-slate-300'
+            }`}
+          >
+            <span className="text-xl leading-none">{icon}</span>
+            <span className="text-[11px] font-bold tracking-wide">{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Problem equation display — handles all LevelType layouts
 // ─────────────────────────────────────────────────────────────
 function ProblemEquation({ problem }: { problem: Problem }) {
@@ -1029,6 +1049,7 @@ function GameScreen({
   onDigit,
   onBackspace,
   onSubmit,
+  onQuit,
 }: {
   level: Level
   problems: Problem[]
@@ -1044,6 +1065,7 @@ function GameScreen({
   onDigit: (d: number) => void
   onBackspace: () => void
   onSubmit: () => void
+  onQuit: () => void
 }) {
   const problem = problems[problemIndex]
   if (!problem) return null
@@ -1055,6 +1077,13 @@ function GameScreen({
     <div className="flex flex-col gap-4 w-full max-w-sm mx-auto px-4 pt-4 pb-6">
       {/* Top bar */}
       <div className="flex items-center justify-between">
+        <button
+          onClick={onQuit}
+          className="p-2 rounded-xl text-slate-500 active:text-slate-300 active:scale-90 transition-all"
+          aria-label="Quit session"
+        >
+          ✕
+        </button>
         <div
           className="px-3 py-1 rounded-xl text-white text-sm font-bold"
           style={{ backgroundColor: level.color }}
@@ -1759,9 +1788,14 @@ export default function MathGame() {
     )
   }
 
+  // ── Helpers ───────────────────────────────────────────────
+  const isMainScreen = screen === 'home' || screen === 'level-select' || screen === 'achievements'
+  const bottomNavActive: 'home' | 'levels' | 'awards' =
+    screen === 'level-select' ? 'levels' : screen === 'achievements' ? 'awards' : 'home'
+
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className="relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden">
+    <div className={`relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden ${isMainScreen ? 'pb-20' : ''}`}>
       {/* Achievement toast overlay */}
       {toastAchievement && (
         <AchievementToast
@@ -1823,8 +1857,6 @@ export default function MathGame() {
             const lvl = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
             startSession(lvl)
           }}
-          onSelectLevel={() => setScreen('level-select')}
-          onViewAchievements={() => setSubScreen('achievements')}
           onSwitchProfile={id => switchProfile(id)}
           onAddProfile={() => setSubScreen('profile-create')}
           onLongPressProfile={profile => {
@@ -1834,8 +1866,9 @@ export default function MathGame() {
         />
       )}
 
-      {screen === 'home' && subScreen === 'achievements' && (
-        <AchievementsScreen activeProfile={activeProfile} onBack={() => setSubScreen('none')} />
+      {/* ── Achievements ── */}
+      {screen === 'achievements' && subScreen === 'none' && (
+        <AchievementsScreen activeProfile={activeProfile} onBack={() => setScreen('home')} />
       )}
 
       {/* ── Level Select ── */}
@@ -1864,6 +1897,7 @@ export default function MathGame() {
           onDigit={handleDigit}
           onBackspace={handleBackspace}
           onSubmit={handleSubmit}
+          onQuit={() => { setScreen('home'); setSubScreen('none') }}
         />
       )}
 
@@ -1916,6 +1950,16 @@ export default function MathGame() {
               setSubScreen('none')
             }
           }}
+        />
+      )}
+
+      {/* ── Bottom Nav (main screens only) ── */}
+      {isMainScreen && subScreen === 'none' && (
+        <BottomNav
+          active={bottomNavActive}
+          onHome={() => { setScreen('home'); setSubScreen('none') }}
+          onLevels={() => setScreen('level-select')}
+          onAwards={() => setScreen('achievements')}
         />
       )}
     </div>
