@@ -6,6 +6,12 @@ export type LevelType =
   | 'addition'      // a + b = ?
   | 'subtraction'   // a - b = ?
   | 'mixed'         // mix of addition and subtraction
+  | 'multiplication'// a × b = ?
+  | 'division'      // a ÷ b = ? (whole-number quotients only)
+  | 'exponent'      // a ^ b = ?
+  | 'sqrt'          // √a = ? (perfect squares only)
+  | 'percentage'    // a% of b = ? (multiples of 10%, whole-number answers)
+  | 'algebra'       // ax = b  or  x ± a = b  (one-step, integer solution)
 
 export interface Level {
   id: number
@@ -20,6 +26,9 @@ export interface Level {
   masteryThreshold: number  // 0–1, fraction of correct needed to advance
   color: string           // UI accent colour for this level
   unlockMessage: string   // message shown when level is unlocked
+  /** Multiplication only: restrict one factor to these values (e.g. [2,5,10]).
+   *  Undefined → use full 2–maxOperand range for both factors. */
+  multipliers?: number[]
 }
 
 export const CURRICULUM: Level[] = [
@@ -163,6 +172,154 @@ export const CURRICULUM: Level[] = [
     color: '#F59E0B',
     unlockMessage: 'YOU ARE A MATH MASTER! 🏆',
   },
+
+  // ── Phase 1: Multiplication & division ──────────────────────────────────────
+
+  {
+    id: 11,
+    name: 'Multiply by 2, 5, 10',
+    description: 'The easiest times tables!',
+    icon: '⚡',
+    type: 'multiplication',
+    maxAnswer: 100,
+    maxOperand: 10,
+    multipliers: [2, 5, 10],
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#7C3AED',
+    unlockMessage: 'Times tables — off to a flying start! ⚡',
+  },
+  {
+    id: 12,
+    name: 'Multiply by 3 & 4',
+    description: 'More times tables!',
+    icon: '🔢',
+    type: 'multiplication',
+    maxAnswer: 48,
+    maxOperand: 12,
+    multipliers: [3, 4],
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#0891B2',
+    unlockMessage: '×3 and ×4 mastered — nice work!',
+  },
+  {
+    id: 13,
+    name: 'Times Tables',
+    description: 'All times tables up to 12!',
+    icon: '✖️',
+    type: 'multiplication',
+    maxAnswer: 144,
+    maxOperand: 12,
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#059669',
+    unlockMessage: 'Full times tables — you nailed it! 🌟',
+  },
+  {
+    id: 14,
+    name: 'Division',
+    description: 'Split numbers equally!',
+    icon: '➗',
+    type: 'division',
+    maxAnswer: 12,
+    maxOperand: 12,
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#D97706',
+    unlockMessage: "Division pro — you're on a roll!",
+  },
+  {
+    id: 15,
+    name: 'Bigger Multiply',
+    description: 'Multiply larger numbers!',
+    icon: '💥',
+    type: 'multiplication',
+    maxAnswer: 240,
+    maxOperand: 20,
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#DC2626',
+    unlockMessage: 'Big multiplication — absolutely crushed it!',
+  },
+  {
+    id: 16,
+    name: 'Long Division',
+    description: 'Divide bigger numbers!',
+    icon: '📐',
+    type: 'division',
+    maxAnswer: 20,
+    maxOperand: 20,
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#7C3AED',
+    unlockMessage: "Long division solved! You've got this!",
+  },
+
+  // ── Phase 1: Higher concepts (integer answers) ───────────────────────────────
+
+  {
+    id: 17,
+    name: 'Powers',
+    description: 'Numbers raised to a power!',
+    icon: '⬆️',
+    type: 'exponent',
+    maxAnswer: 256,
+    maxOperand: 4,   // base 2–4, exponent 2–4 → max 4⁴ = 256
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#0369A1',
+    unlockMessage: 'To the power of AMAZING!',
+  },
+  {
+    id: 18,
+    name: 'Square Roots',
+    description: 'Find the square root!',
+    icon: '√',
+    type: 'sqrt',
+    maxAnswer: 12,
+    maxOperand: 12,  // roots 2–12 → squares 4–144
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#65A30D',
+    unlockMessage: 'Square roots — rooted in success! 🌱',
+  },
+  {
+    id: 19,
+    name: 'Percentages',
+    description: 'Find percentages of numbers!',
+    icon: '%',
+    type: 'percentage',
+    maxAnswer: 100,
+    maxOperand: 10,  // percent steps 10%–100% (maxOperand × 10)
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#BE185D',
+    unlockMessage: 'Percentage pro! Nothing can stop you!',
+  },
+  {
+    id: 20,
+    name: 'Algebra',
+    description: 'Solve for the mystery number!',
+    icon: '🔍',
+    type: 'algebra',
+    maxAnswer: 20,
+    maxOperand: 10,
+    showDots: false,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#1D4ED8',
+    unlockMessage: 'Algebra solved! You are a true Math Wizard! 🧙',
+  },
 ]
 
 export function getLevelById(id: number): Level | undefined {
@@ -170,3 +327,40 @@ export function getLevelById(id: number): Level | undefined {
 }
 
 export const TOTAL_LEVELS = CURRICULUM.length
+
+/**
+ * Map a child's age to an appropriate starting highestUnlockedLevel.
+ * Conservative by one level so the first session is a confidence builder,
+ * not a wall. Ages 10+ map to level 10 (Math Master) — the full curriculum
+ * is unlocked and they begin at the top.
+ *
+ * Age → Level
+ *  ≤4 → 1  (Count to 5)
+ *   5 → 2  (Count to 10)
+ *   6 → 3  (Add to 5)
+ *   7 → 5  (Add to 10 — fast, no dots)
+ *   8 → 7  (Subtract from 5)
+ *   9 → 9  (Subtract from 20)
+ *  10 → 10 (Math Master)
+ *  11 → 11 (Multiply by 2, 5, 10)
+ *  12 → 13 (Times Tables — assumes basic ×2/5/10 known)
+ *  13 → 15 (Bigger Multiply)
+ *  14 → 17 (Powers)
+ *  15 → 19 (Percentages)
+ *  16+ → 20 (Algebra — full curriculum accessible)
+ */
+export function getStartingLevel(age: number): number {
+  if (age <= 4) return 1
+  if (age === 5) return 2
+  if (age === 6) return 3
+  if (age === 7) return 5
+  if (age === 8) return 7
+  if (age === 9) return 9
+  if (age === 10) return 10
+  if (age === 11) return 11
+  if (age === 12) return 13
+  if (age === 13) return 15
+  if (age === 14) return 17
+  if (age === 15) return 19
+  return 20
+}

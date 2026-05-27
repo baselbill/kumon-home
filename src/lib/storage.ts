@@ -160,14 +160,22 @@ export function setActiveProfileId(id: string): void {
   }
 }
 
-/** Create a fresh ProfileSave with sane defaults. */
+/**
+ * Create a fresh ProfileSave with sane defaults.
+ *
+ * @param startingLevel  highestUnlockedLevel to begin at (default 1).
+ *   Pass getStartingLevel(age) from curriculum.ts to give age-appropriate access.
+ *   Levels below startingLevel are automatically accessible on first play.
+ */
 export function createProfile(
   name: string,
   themeKey: string,
-  readerMode: boolean
+  readerMode: boolean,
+  startingLevel = 1
 ): ProfileSave {
   return {
     ...DEFAULT_SAVE,
+    highestUnlockedLevel: Math.max(1, startingLevel),
     profileId: `profile-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     profileName: name,
     themeKey,
@@ -251,8 +259,14 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'level_10',
     name: 'Math Master',
-    description: 'Completed all 10 levels!',
+    description: 'Reached level 10!',
     icon: '🏆',
+  },
+  {
+    id: 'level_20',
+    name: 'Math Wizard',
+    description: 'Completed all 20 levels!',
+    icon: '🧙',
   },
   {
     id: 'sessions_10',
@@ -279,6 +293,7 @@ export function checkNewAchievements(save: GameSave): string[] {
   check('stars_200', save.totalStars >= 200)
   check('level_5', save.highestUnlockedLevel >= 5)
   check('level_10', save.highestUnlockedLevel > 10)
+  check('level_20', save.highestUnlockedLevel > 20)
   check('sessions_10', save.totalSessionsPlayed >= 10)
 
   return newOnes

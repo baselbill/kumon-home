@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react'
-import { CURRICULUM, getLevelById, Level, TOTAL_LEVELS } from '@/lib/curriculum'
+import { CURRICULUM, getLevelById, getStartingLevel, Level, TOTAL_LEVELS } from '@/lib/curriculum'
 import { Problem, generateSession, narrate } from '@/lib/problems'
 import {
   LevelProgress,
@@ -36,7 +36,7 @@ interface ProblemAttempt {
   responseTimeMs: number
   operand1: number
   operand2: number | null
-  operator: '+' | '-' | null
+  operator: Problem['operator']
 }
 
 interface SessionResult {
@@ -415,14 +415,17 @@ function ProfileCreator({
   onDone,
   onCancel,
 }: {
-  onDone: (name: string, themeKey: string, readerMode: boolean) => void
+  onDone: (name: string, themeKey: string, readerMode: boolean, age?: number) => void
   onCancel?: () => void
 }) {
   const [name, setName] = useState('')
   const [themeKey, setThemeKey] = useState(PRESET_THEMES[0].key)
   const [readerMode, setReaderMode] = useState(false)
+  const [age, setAge] = useState<number | null>(null)
 
   const selectedTheme = PRESET_THEMES.find(t => t.key === themeKey) ?? PRESET_THEMES[0]
+  const startLevel = age != null ? getStartingLevel(age) : null
+  const startLevelName = startLevel != null ? (getLevelById(startLevel)?.name ?? 'Math Master') : null
 
   return (
     <div className="flex flex-col gap-5 p-6 max-w-sm mx-auto">
@@ -444,6 +447,45 @@ function ProfileCreator({
           className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-400"
           autoComplete="off"
         />
+      </div>
+
+      {/* Age stepper — sets the starting level */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Age{' '}
+          <span className="text-gray-400 font-normal">(optional — skips too-easy levels)</span>
+        </label>
+        <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3">
+          <button
+            onClick={() => setAge(a => a == null ? null : Math.max(4, a - 1))}
+            disabled={age == null || age <= 4}
+            className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-xl font-bold text-gray-600 flex items-center justify-center active:scale-95 disabled:opacity-30"
+          >−</button>
+          <div className="flex-1 text-center">
+            {age != null ? (
+              <span className="text-3xl font-bold text-gray-800">{age}</span>
+            ) : (
+              <button
+                onClick={() => setAge(6)}
+                className="text-sm text-purple-500 font-semibold underline underline-offset-2"
+              >
+                Tap to set age
+              </button>
+            )}
+          </div>
+          <button
+            onClick={() => setAge(a => Math.min(16, (a ?? 5) + 1))}
+            disabled={age != null && age >= 16}
+            className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 text-xl font-bold text-gray-600 flex items-center justify-center active:scale-95 disabled:opacity-30"
+          >+</button>
+        </div>
+        <div className="mt-1.5 text-center text-xs min-h-[1.1rem]">
+          {startLevelName != null ? (
+            <span className="text-purple-600 font-medium">Starts at: {startLevelName}</span>
+          ) : (
+            <span className="text-gray-400">Starts at level 1 if age not set</span>
+          )}
+        </div>
       </div>
 
       {/* Theme picker — emoji grid, no reading required */}
@@ -482,7 +524,7 @@ function ProfileCreator({
       <button
         onClick={() => {
           const trimmed = name.trim()
-          if (trimmed) onDone(trimmed, themeKey, readerMode)
+          if (trimmed) onDone(trimmed, themeKey, readerMode, age ?? undefined)
         }}
         disabled={!name.trim()}
         className="w-full py-4 text-xl font-bold rounded-2xl text-white bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform shadow-lg"
@@ -900,6 +942,72 @@ function AchievementsScreen({ activeProfile, onBack }: { activeProfile: ProfileS
 }
 
 // ─────────────────────────────────────────────────────────────
+// Problem equation display — handles all LevelType layouts
+// ─────────────────────────────────────────────────────────────
+function ProblemEquation({ problem }: { problem: Problem }) {
+  const big = 'text-5xl font-bold text-gray-800'
+  const opr = 'text-4xl font-bold text-gray-500 mx-3'
+  const eq  = 'text-4xl font-bold text-gray-400 mx-3'
+
+  if (problem.type === 'counting') {
+    return (
+      <div className="text-center text-2xl font-bold text-gray-600 mb-2">
+        How many?
+      </div>
+    )
+  }
+
+  if (problem.type === 'exponent') {
+    return (
+      <div className="text-center mb-2 flex items-start justify-center gap-0.5">
+        <span className={big}>{problem.operand1}</span>
+        <sup className="text-2xl font-bold text-gray-800 mt-1 ml-0.5">{problem.operand2}</sup>
+        <span className={eq}>=</span>
+      </div>
+    )
+  }
+
+  if (problem.type === 'sqrt') {
+    return (
+      <div className="text-center mb-2">
+        <span className="text-5xl font-bold text-gray-800">√{problem.operand1}</span>
+        <span className={eq}>=</span>
+      </div>
+    )
+  }
+
+  if (problem.type === 'percentage') {
+    return (
+      <div className="text-center mb-2 flex items-center justify-center flex-wrap">
+        <span className={big}>{problem.operand1}%</span>
+        <span className={opr}>of</span>
+        <span className={big}>{problem.operand2}</span>
+        <span className={eq}>=</span>
+      </div>
+    )
+  }
+
+  if (problem.type === 'algebra' && problem.displayText) {
+    return (
+      <div className="text-center mb-2">
+        <div className="text-4xl font-bold text-gray-800">{problem.displayText}</div>
+        <div className="text-xl text-gray-500 mt-1">x = ?</div>
+      </div>
+    )
+  }
+
+  // Default: addition, subtraction, multiplication, division
+  return (
+    <div className="text-center mb-2">
+      <span className={big}>{problem.operand1}</span>
+      <span className={opr}>{problem.operator}</span>
+      {problem.operand2 !== null && <span className={big}>{problem.operand2}</span>}
+      <span className={eq}>=</span>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Game Screen (the main playing view)
 // ─────────────────────────────────────────────────────────────
 function GameScreen({
@@ -988,17 +1096,8 @@ function GameScreen({
           <div className="text-center text-xl font-semibold text-gray-700 mb-2 leading-snug">
             {narrate(problem, theme)}
           </div>
-        ) : problem.type === 'counting' ? (
-          <div className="text-center text-2xl font-bold text-gray-600 mb-2">
-            How many?
-          </div>
         ) : (
-          <div className="text-center mb-2">
-            <span className="text-5xl font-bold text-gray-800">{problem.operand1}</span>
-            <span className="text-4xl font-bold text-gray-500 mx-3">{problem.operator}</span>
-            <span className="text-5xl font-bold text-gray-800">{problem.operand2}</span>
-            <span className="text-4xl font-bold text-gray-400 mx-3">=</span>
-          </div>
+          <ProblemEquation problem={problem} />
         )}
 
         {/* Themed dot display */}
@@ -1341,7 +1440,7 @@ export default function MathGame() {
   // ── Digit input ───────────────────────────────────────────
   const handleDigit = useCallback((d: number) => {
     setUserAnswer(prev => {
-      if (prev.length >= 2) return prev  // max 2 digits (answers ≤ 99)
+      if (prev.length >= 3) return prev  // max 3 digits (answers ≤ 999)
       return prev + String(d)
     })
   }, [])
@@ -1580,8 +1679,9 @@ export default function MathGame() {
     return (
       <div className="relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden">
         <ProfileCreator
-          onDone={(name, themeKey, readerMode) => {
-            const newProfile = createProfile(name, themeKey, readerMode)
+          onDone={(name, themeKey, readerMode, age) => {
+            const newProfile = createProfile(name, themeKey, readerMode,
+              age != null ? getStartingLevel(age) : 1)
             const newProfiles = [newProfile]
             setProfiles(newProfiles)
             saveProfiles(newProfiles)
@@ -1633,8 +1733,9 @@ export default function MathGame() {
       {/* ── Profile Create ── */}
       {subScreen === 'profile-create' && (
         <ProfileCreator
-          onDone={(name, themeKey, readerMode) => {
-            const newProfile = createProfile(name, themeKey, readerMode)
+          onDone={(name, themeKey, readerMode, age) => {
+            const newProfile = createProfile(name, themeKey, readerMode,
+              age != null ? getStartingLevel(age) : 1)
             const newProfiles = [...profiles, newProfile]
             setProfiles(newProfiles)
             saveProfiles(newProfiles)
