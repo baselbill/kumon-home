@@ -133,7 +133,7 @@ export function loadProfiles(): ProfileSave[] {
     if (raw) {
       const parsed: ProfileSave[] = JSON.parse(raw)
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map(p => migrateProfile(p as Record<string, unknown>))
+        return parsed.map(p => migrateProfile(p as unknown as Record<string, unknown>))
       }
     }
 
