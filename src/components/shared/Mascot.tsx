@@ -3,13 +3,20 @@
 import React from 'react'
 import { Theme } from '@/lib/themes'
 
-export function Mascot({ mood, theme }: { mood: 'idle' | 'happy' | 'thinking' | 'celebrate'; theme: Theme }) {
-  // idle → theme mascot; emotional states use expressive emoji
+export function Mascot({
+  mood,
+  theme,
+  companionStage = 0,
+}: {
+  mood: 'idle' | 'happy' | 'thinking' | 'celebrate'
+  theme: Theme
+  companionStage?: number
+}) {
   const face =
     mood === 'happy'     ? '🤩' :
     mood === 'thinking'  ? '🤔' :
     mood === 'celebrate' ? '🥳' :
-    theme.mascot
+    theme.evolutionStages[companionStage] ?? theme.mascot
 
   return (
     <div

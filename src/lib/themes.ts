@@ -21,6 +21,9 @@ export interface Theme {
   shortFeedback: string
   soundStyle: 'roar' | 'laser' | 'splash' | 'chime' | 'pop'
   locations: ThemeLocation[]   // exactly 4, covering levels 1–20
+  /** Companion evolution — egg → baby → adult → legend */
+  evolutionStages: [string, string, string, string]
+  evolutionLabels: [string, string, string, string]
 }
 
 export const PRESET_THEMES: Theme[] = [
@@ -40,6 +43,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Lava Plateau', levelRange: [11, 15], icon: '🌋', storyHook: 'The volcano rumbles — your dinosaur roars right back! 🌋' },
       { name: 'Dino Peak', levelRange: [16, 20], icon: '⛰️', storyHook: 'You stand at the peak of the world. All dinosaurs cheer! ⛰️' },
     ],
+    evolutionStages: ['🥚', '🦎', '🦕', '🦖'],
+    evolutionLabels: ['Egg', 'Hatchling', 'Sauropod', 'T-Rex'],
   },
   {
     key: 'space',
@@ -57,6 +62,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Nebula Drift', levelRange: [11, 15], icon: '🌌', storyHook: 'Colours pour past the windows — you\'re deep in space! 🌌' },
       { name: 'Starfall Station', levelRange: [16, 20], icon: '🌟', storyHook: 'The whole galaxy sparkles around you. You made it! 🌟' },
     ],
+    evolutionStages: ['🌑', '🛸', '🚀', '🌟'],
+    evolutionLabels: ['Dark Matter', 'Cruiser', 'Rocket', 'Supernova'],
   },
   {
     key: 'ocean',
@@ -74,6 +81,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Midnight Trench', levelRange: [11, 15], icon: '🌊', storyHook: 'It\'s dark and glittery and magical down here! 🌊' },
       { name: 'Pearl Grotto', levelRange: [16, 20], icon: '🐚', storyHook: 'You find the pearl the ocean has been hiding! 🐚' },
     ],
+    evolutionStages: ['🥚', '🐟', '🐬', '🐋'],
+    evolutionLabels: ['Egg', 'Minnow', 'Dolphin', 'Blue Whale'],
   },
   {
     key: 'jungle',
@@ -91,6 +100,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Mist Valley', levelRange: [11, 15], icon: '🌿', storyHook: 'Mist swirls around giant leaves as you push forward! 🌿' },
       { name: 'Golden Canopy', levelRange: [16, 20], icon: '✨', storyHook: 'You burst through the canopy into golden sunlight! ✨' },
     ],
+    evolutionStages: ['🌱', '🐒', '🦍', '🌴'],
+    evolutionLabels: ['Sprout', 'Monkey', 'Gorilla', 'Jungle King'],
   },
   {
     key: 'unicorns',
@@ -108,6 +119,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Crystal Cavern', levelRange: [11, 15], icon: '💎', storyHook: 'Crystals hum with ancient unicorn magic all around you! 💎' },
       { name: 'Moonrise Summit', levelRange: [16, 20], icon: '🌙', storyHook: 'A moonbeam crowns your horn. You are legendary! 🌙' },
     ],
+    evolutionStages: ['⭐', '🌸', '🦄', '🌈'],
+    evolutionLabels: ['Stardust', 'Foal', 'Unicorn', 'Rainbow'],
   },
   {
     key: 'robots',
@@ -125,6 +138,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Code Sector', levelRange: [11, 15], icon: '💻', storyHook: 'Processing power: MAXIMUM. You can do anything! 💻' },
       { name: 'Mainframe Core', levelRange: [16, 20], icon: '🤖', storyHook: 'CORE UNLOCKED. You are the greatest robot ever built! 🤖' },
     ],
+    evolutionStages: ['🔩', '⚙️', '🤖', '🦾'],
+    evolutionLabels: ['Bolt', 'Gear', 'Robot', 'Cyborg'],
   },
   {
     key: 'cats',
@@ -142,6 +157,8 @@ export const PRESET_THEMES: Theme[] = [
       { name: 'Night Alley', levelRange: [11, 15], icon: '🌙', storyHook: 'The night belongs to you. Every shadow is yours! 🌙' },
       { name: 'Ancient Tower', levelRange: [16, 20], icon: '🗼', storyHook: 'You claim the tower! Cats will tell of this day! 🗼' },
     ],
+    evolutionStages: ['🐾', '🐱', '😺', '👑'],
+    evolutionLabels: ['Kitten', 'Cat', 'Cheshire', 'Legend'],
   },
 ]
 

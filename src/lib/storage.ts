@@ -56,6 +56,8 @@ export interface ProfileSave extends GameSave {
   themeKey: string       // key matching a Theme in PRESET_THEMES
   readerMode: boolean    // true → show story sentences wrapping problems
   adaptiveState: Record<number, AdaptiveState>  // keyed by level ID
+  companionStage: number       // 0 egg · 1 baby · 2 adult · 3 legend
+  unlockedCompanions: string[] // theme keys owned
 }
 
 const SAVE_KEY = 'kumon_home_v1'
@@ -105,19 +107,27 @@ export function resetGame(): GameSave {
 
 // ─── Multi-profile API ────────────────────────────────────────
 
-const SAVE_VERSION = 2
+const SAVE_VERSION = 3
 
 export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
-  return {
+  const themeKey = (raw.themeKey as string | undefined) ?? 'dinosaurs'
+  const result = {
     ...DEFAULT_SAVE,
     version: SAVE_VERSION,
     profileId: '',
     profileName: 'Player',
-    themeKey: 'dinosaurs',
+    themeKey,
     readerMode: false,
     adaptiveState: {},
+    companionStage: 0,
+    unlockedCompanions: [themeKey],
     ...raw,
   } as ProfileSave
+  // Invariant: the active theme is always owned
+  if (!result.unlockedCompanions.includes(result.themeKey)) {
+    result.unlockedCompanions = [result.themeKey, ...result.unlockedCompanions]
+  }
+  return result
 }
 
 /**
@@ -141,15 +151,14 @@ export function loadProfiles(): ProfileSave[] {
     const legacy = localStorage.getItem(SAVE_KEY)
     if (legacy) {
       const parsed = JSON.parse(legacy)
-      const migrated: ProfileSave = {
-        ...DEFAULT_SAVE,
+      const migrated = migrateProfile({
         ...parsed,
         profileId: 'profile-legacy',
         profileName: 'Player',
-        themeKey: 'dinosaurs',
+        themeKey: parsed.themeKey ?? 'dinosaurs',
         readerMode: false,
         adaptiveState: {},
-      }
+      })
       saveProfiles([migrated])
       return [migrated]
     }
@@ -204,6 +213,8 @@ export function createProfile(
     themeKey,
     readerMode,
     adaptiveState: {},
+    companionStage: 0,
+    unlockedCompanions: [themeKey],
   }
 }
 

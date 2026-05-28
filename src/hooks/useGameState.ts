@@ -17,6 +17,7 @@ import {
   Achievement,
 } from '@/lib/storage'
 import { Theme, PRESET_THEMES } from '@/lib/themes'
+import { computeCompanionProgress } from '@/lib/companion'
 import { playCorrectSound, playWrongSound, playLevelCompleteSound } from '@/lib/sounds'
 import { FeedbackState, FloatingStar, ProblemAttempt, SessionResult } from '@/types/game'
 
@@ -57,6 +58,17 @@ export function useGameState() {
   const [floatingStars, setFloatingStars] = useState<FloatingStar[]>([])
   const [toastAchievement, setToastAchievement] = useState<Achievement | null>(null)
   const [toastQueue, setToastQueue] = useState<Achievement[]>([])
+
+  // ── Companion / evolution state ───────────────────────────
+  const [pendingEvolution, setPendingEvolution] = useState<number | null>(null)
+  const [pendingCompanionUnlock, setPendingCompanionUnlock] = useState<string | null>(null)
+
+  const clearPendingEvolution = useCallback(() => setPendingEvolution(null), [])
+  const clearPendingCompanionUnlock = useCallback(() => setPendingCompanionUnlock(null), [])
+
+  const enqueueToast = useCallback((ach: Achievement) => {
+    setToastQueue(q => [...q, ach])
+  }, [])
 
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const starIdRef = useRef(0)
@@ -279,9 +291,11 @@ export function useGameState() {
 
       // D2: All profile reads + writes happen inside the functional updater
       // so they always operate on the latest state, never a stale snapshot.
-      // collectedNewAchIds is written synchronously by the updater before
+      // collectedNew* variables are written synchronously by the updater before
       // React schedules a re-render, making it safe to read immediately after.
       let collectedNewAchIds: string[] = []
+      let collectedEvolution: number | null = null
+      let collectedCompanionUnlocks: string[] = []
 
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.profileId === activeProfileId)
@@ -355,11 +369,60 @@ export function useGameState() {
 
         collectedNewAchIds = newAchIds  // capture for post-updater side effects
 
+        // ── Companion progress ─────────────────────────────────
+        const companionProgress = computeCompanionProgress({
+          highestUnlockedLevel: updated.highestUnlockedLevel,
+          themeKey: updated.themeKey,
+          unlockedCompanions: updated.unlockedCompanions ?? [updated.themeKey],
+        })
+
+        const prevStage = prof.companionStage ?? 0
+        if (companionProgress.stage > prevStage) {
+          collectedEvolution = companionProgress.stage
+        }
+        if (companionProgress.newlyUnlocked.length > 0) {
+          collectedCompanionUnlocks = companionProgress.newlyUnlocked
+        }
+
+        updated = {
+          ...updated,
+          companionStage: companionProgress.stage,
+          unlockedCompanions: Array.from(
+            new Set([
+              ...(updated.unlockedCompanions ?? [updated.themeKey]),
+              ...companionProgress.newlyUnlocked,
+            ])
+          ),
+        }
+
         const next = [...prev]
         next[idx] = updated
         saveProfiles(next)
         return next
       })
+
+      // ── Evolution and companion unlock signals ─────────────
+      if (collectedEvolution !== null) setPendingEvolution(collectedEvolution)
+      if (collectedCompanionUnlocks.length > 0) {
+        setPendingCompanionUnlock(collectedCompanionUnlocks[0])
+        // Queue toasts for any additional simultaneous unlocks (e.g. all-at-once at level 20)
+        if (collectedCompanionUnlocks.length > 1) {
+          const extras = collectedCompanionUnlocks.slice(1)
+          const extraToasts = extras
+            .map(key => {
+              const ct = PRESET_THEMES.find(t => t.key === key)
+              if (!ct) return null
+              return {
+                id: `companion_${key}`,
+                name: `${ct.label} Companion!`,
+                description: 'New friend unlocked!',
+                icon: ct.mascot,
+              } as Achievement
+            })
+            .filter((a): a is Achievement => a !== null)
+          if (extraToasts.length > 0) setToastQueue(q => [...q, ...extraToasts])
+        }
+      }
 
       // ── Queue achievement toasts ───────────────────────────
       if (collectedNewAchIds.length > 0) {
@@ -434,5 +497,11 @@ export function useGameState() {
     toastAchievement,
     setToastAchievement,
     toastQueue,
+    enqueueToast,
+    // companion / evolution
+    pendingEvolution,
+    clearPendingEvolution,
+    pendingCompanionUnlock,
+    clearPendingCompanionUnlock,
   }
 }

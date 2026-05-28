@@ -83,6 +83,7 @@ export function GameScreen({
   sessionCorrect,
   floatingStars,
   theme,
+  companionStage,
   readerMode,
   showDots,
   elapsedSec,
@@ -99,6 +100,7 @@ export function GameScreen({
   sessionCorrect: number
   floatingStars: FloatingStar[]
   theme: Theme
+  companionStage: number
   readerMode: boolean
   showDots: boolean
   elapsedSec: number
@@ -163,11 +165,12 @@ export function GameScreen({
           </div>
         ))}
 
-        {/* Themed mascot */}
+        {/* Themed mascot — shows evolved form */}
         <div className="flex justify-center mb-3">
           <Mascot
             mood={isCorrect ? 'happy' : isWrong ? 'thinking' : 'idle'}
             theme={theme}
+            companionStage={companionStage}
           />
         </div>
 

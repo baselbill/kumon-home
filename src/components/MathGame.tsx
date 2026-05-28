@@ -3,6 +3,7 @@
 import React, {
   useState,
   useEffect,
+  useCallback,
 } from 'react'
 import { getLevelById, getStartingLevel, TOTAL_LEVELS } from '@/lib/curriculum'
 import {
@@ -11,6 +12,8 @@ import {
   createProfile,
 } from '@/lib/storage'
 import { PRESET_THEMES } from '@/lib/themes'
+import { Achievement } from '@/lib/storage'
+import { EvolutionOverlay } from '@/components/shared/EvolutionOverlay'
 import { useGameState } from '@/hooks/useGameState'
 import { Screen, SubScreen } from '@/types/game'
 import { AchievementToast } from '@/components/shared/AchievementToast'
@@ -50,7 +53,34 @@ export default function MathGame() {
     handleSubmit,
     toastAchievement,
     setToastAchievement,
+    enqueueToast,
+    pendingEvolution,
+    clearPendingEvolution,
+    pendingCompanionUnlock,
+    clearPendingCompanionUnlock,
   } = useGameState()
+
+  const companionStage = activeProfile?.companionStage ?? 0
+
+  // Show companion toast after evolution dismissed (or immediately when no evolution pending).
+  // useRef guard prevents a duplicate enqueue from React Strict Mode double-invocation.
+  const companionToastFired = React.useRef(false)
+  useEffect(() => {
+    if (pendingCompanionUnlock && !pendingEvolution && !companionToastFired.current) {
+      companionToastFired.current = true
+      const ct = PRESET_THEMES.find(t => t.key === pendingCompanionUnlock)
+      if (ct) {
+        enqueueToast({
+          id: `companion_${pendingCompanionUnlock}`,
+          name: `${ct.label} Companion!`,
+          description: 'New friend unlocked!',
+          icon: ct.mascot,
+        } as Achievement)
+      }
+      clearPendingCompanionUnlock()
+    }
+    if (!pendingCompanionUnlock) companionToastFired.current = false
+  }, [pendingCompanionUnlock, pendingEvolution, enqueueToast, clearPendingCompanionUnlock])
 
   // ── Navigation ───────────────────────────────────────────
   const [screen, setScreen] = useState<Screen>('home')
@@ -102,6 +132,15 @@ export default function MathGame() {
   // ── Render ────────────────────────────────────────────────
   return (
     <div className={`relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden ${isMainScreen ? 'pb-20' : ''}`}>
+      {/* Evolution overlay — full-screen on companion stage-up */}
+      {pendingEvolution !== null && (
+        <EvolutionOverlay
+          stage={pendingEvolution}
+          theme={theme}
+          onDismiss={clearPendingEvolution}
+        />
+      )}
+
       {/* Achievement toast overlay */}
       {toastAchievement && (
         <AchievementToast
@@ -159,6 +198,7 @@ export default function MathGame() {
           profiles={profiles}
           activeProfile={activeProfile}
           theme={theme}
+          companionStage={companionStage}
           onPlay={() => {
             const lvl = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
             startSession(lvl)
@@ -198,6 +238,7 @@ export default function MathGame() {
           sessionCorrect={sessionCorrect}
           floatingStars={floatingStars}
           theme={theme}
+          companionStage={companionStage}
           readerMode={activeProfile.readerMode}
           showDots={sessionShowDots}
           elapsedSec={sessionElapsedSec}

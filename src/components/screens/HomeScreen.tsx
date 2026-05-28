@@ -10,6 +10,7 @@ export function HomeScreen({
   profiles,
   activeProfile,
   theme,
+  companionStage,
   onPlay,
   onSwitchProfile,
   onAddProfile,
@@ -18,6 +19,7 @@ export function HomeScreen({
   profiles: ProfileSave[]
   activeProfile: ProfileSave
   theme: Theme
+  companionStage: number
   onPlay: () => void
   onSwitchProfile: (id: string) => void
   onAddProfile: () => void
@@ -88,8 +90,8 @@ export function HomeScreen({
         Math Adventure!
       </div>
 
-      {/* Themed mascot */}
-      <Mascot mood="idle" theme={theme} />
+      {/* Themed mascot — shows evolved form */}
+      <Mascot mood="idle" theme={theme} companionStage={companionStage} />
 
       {/* Stats row */}
       <div className="flex gap-4 justify-center w-full">
