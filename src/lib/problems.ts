@@ -1,6 +1,6 @@
 import { Level, LevelType } from './curriculum'
 import type { Theme } from './themes'
-import type { AdaptiveState } from './storage'
+import type { AdaptiveState, WeakPair } from './storage'
 
 export interface Problem {
   id: string
@@ -378,11 +378,51 @@ export function generateSession(
   }
 
   const problems: Problem[] = []
-  for (let i = 0; i < level.problemsPerSession; i++) {
+
+  // Layer 2: front-load up to 3 weak-pair problems from previous sessions
+  const weakPairs = adaptive?.weakPairs ?? []
+  for (const pair of weakPairs.slice(0, 3)) {
+    const p = makeProblemFromPair(effectiveLevel, pair)
+    if (p) problems.push(p)
+  }
+
+  // Fill remaining slots with normal random generation
+  const needed = level.problemsPerSession - problems.length
+  for (let i = 0; i < needed; i++) {
     problems.push(generateProblem(effectiveLevel))
   }
 
+  // Shuffle so weak-pair problems are distributed throughout the session
+  for (let i = problems.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[problems[i], problems[j]] = [problems[j], problems[i]]
+  }
+
   return { problems, showDots: effectiveShowDots }
+}
+
+function makeProblemFromPair(level: Level, pair: WeakPair): Problem | null {
+  const op = pair.op as Problem['operator']
+  if (!op) return null
+
+  let answer: number
+  switch (op) {
+    case '+': answer = pair.a + pair.b; break
+    case '-': answer = pair.a - pair.b; if (answer < 0) return null; break
+    case '×': answer = pair.a * pair.b; break
+    case '÷': if (pair.b === 0 || pair.a % pair.b !== 0) return null; answer = pair.a / pair.b; break
+    default: return null  // skip exponent, sqrt, algebra, percentage
+  }
+
+  return {
+    id: makeId(),
+    type: level.type,
+    operand1: pair.a,
+    operand2: pair.b,
+    operator: op,
+    answer,
+    showDots: level.showDots,
+  }
 }
 
 /** Format a problem as a human-readable string, e.g. "3 + 4 = ?" */
