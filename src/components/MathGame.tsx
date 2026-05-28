@@ -716,6 +716,9 @@ function HomeScreen({
 }) {
   const highestLevel = getLevelById(activeProfile.highestUnlockedLevel)
   const allDone = activeProfile.highestUnlockedLevel > TOTAL_LEVELS
+  const masteredCount = Object.values(activeProfile.levelProgress).filter(p => p.completed).length
+  const currentLevelId = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
+  const nextLevel = !allDone ? getLevelById(currentLevelId + 1) : null
 
   // Long-press implementation via touch + mouse events (longpress is not a DOM event)
   const longPressTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
@@ -791,13 +794,42 @@ function HomeScreen({
           <div className="text-xs text-slate-500">Day streak</div>
         </div>
         <div className="flex-1 bg-slate-800 border-2 border-slate-700 rounded-2xl p-3">
-          <div className="text-2xl">{highestLevel?.icon ?? '🏆'}</div>
+          <div className="text-2xl">{allDone ? '🏆' : '✅'}</div>
           <div className="text-2xl font-bold text-amber-400">
-            {allDone ? '✓' : activeProfile.highestUnlockedLevel}
+            {allDone ? '20' : masteredCount}
           </div>
-          <div className="text-xs text-slate-500">
-            {allDone ? 'Done!' : 'Level'}
-          </div>
+          <div className="text-xs text-slate-500">Mastered</div>
+        </div>
+      </div>
+
+      {/* Journey progress strip */}
+      <div className="w-full">
+        <div className="flex gap-[3px] justify-center">
+          {CURRICULUM.map(level => {
+            const prog = activeProfile.levelProgress[level.id]
+            const mastered = prog?.completed ?? false
+            const unlocked = level.id <= activeProfile.highestUnlockedLevel
+            const isCurrent = level.id === currentLevelId && !allDone
+            return (
+              <div
+                key={level.id}
+                className={`rounded-full flex-shrink-0 transition-all ${
+                  isCurrent ? 'ring-2 ring-white/50 ring-offset-1 ring-offset-slate-900' : ''
+                }`}
+                style={{
+                  width: 13,
+                  height: 13,
+                  backgroundColor: level.color,
+                  opacity: mastered ? 1 : unlocked ? 0.45 : 0.12,
+                }}
+              />
+            )
+          })}
+        </div>
+        <div className="text-center text-xs text-slate-500 mt-2 font-semibold">
+          {allDone
+            ? '🏆 All 20 levels mastered!'
+            : `Level ${currentLevelId} of ${TOTAL_LEVELS} · ${masteredCount} mastered`}
         </div>
       </div>
 
@@ -818,6 +850,24 @@ function HomeScreen({
           <div className="text-3xl mb-1">🏆</div>
           <div className="font-bold text-lg">You finished all levels!</div>
           <div className="text-sm">{theme.celebrationLine}</div>
+        </div>
+      )}
+
+      {/* Next up teaser */}
+      {!allDone && nextLevel && (
+        <div className="w-full rounded-2xl p-3 border border-white/[0.07] bg-slate-800/50 flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+            style={{ backgroundColor: `${nextLevel.color}22`, border: `1.5px solid ${nextLevel.color}55` }}
+          >
+            {nextLevel.icon}
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Next up</div>
+            <div className="text-sm font-bold text-slate-300 leading-tight">{nextLevel.name}</div>
+            <div className="text-xs text-slate-500 truncate">{nextLevel.description}</div>
+          </div>
+          <div className="w-1.5 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: nextLevel.color }} />
         </div>
       )}
 
