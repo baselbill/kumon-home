@@ -3,7 +3,7 @@
 import React, { useRef } from 'react'
 import { CURRICULUM, getLevelById, TOTAL_LEVELS } from '@/lib/curriculum'
 import { ProfileSave } from '@/lib/storage'
-import { Theme, PRESET_THEMES } from '@/lib/themes'
+import { Theme, PRESET_THEMES, getLocationForLevel } from '@/lib/themes'
 import { Mascot } from '@/components/shared/Mascot'
 
 export function HomeScreen({
@@ -28,6 +28,7 @@ export function HomeScreen({
   const masteredCount = Object.values(activeProfile.levelProgress).filter(p => p.completed).length
   const currentLevelId = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
   const nextLevel = !allDone ? getLevelById(currentLevelId + 1) : null
+  const currentLocation = getLocationForLevel(theme, currentLevelId)
 
   // Long-press implementation via touch + mouse events (longpress is not a DOM event)
   const longPressTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
@@ -113,6 +114,12 @@ export function HomeScreen({
 
       {/* Journey progress strip */}
       <div className="w-full">
+        {!allDone && (
+          <div className="flex items-center justify-center gap-1 mb-2 text-xs font-semibold text-slate-400">
+            <span>📍</span>
+            <span>{currentLocation.icon} {currentLocation.name}</span>
+          </div>
+        )}
         <div className="flex gap-[3px] justify-center">
           {CURRICULUM.map(level => {
             const prog = activeProfile.levelProgress[level.id]

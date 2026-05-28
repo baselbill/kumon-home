@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { Level } from '@/lib/curriculum'
-import { Theme } from '@/lib/themes'
+import { Theme, getLocationForLevel } from '@/lib/themes'
 import { playLevelCompleteSound } from '@/lib/sounds'
 import { Confetti } from '@/components/shared/Confetti'
 
@@ -17,6 +17,13 @@ export function LevelCompleteScreen({
   theme: Theme
   onContinue: () => void
 }) {
+  const storyHook = getLocationForLevel(theme, level.id).storyHook
+  const CROSSING_LEVELS = [5, 10, 15, 20]
+  const isCrossing = CROSSING_LEVELS.includes(level.id)
+  const newLocation = isCrossing && level.id < 20
+    ? getLocationForLevel(theme, level.id + 1)
+    : null
+
   useEffect(() => {
     playLevelCompleteSound()
   }, [])
@@ -26,7 +33,7 @@ export function LevelCompleteScreen({
       <Confetti />
       <div className="text-7xl mt-6 animate-bounce">{level.icon}</div>
       <div className="text-3xl font-bold text-slate-100 animate-bounce-in">
-        {level.unlockMessage}
+        {storyHook}
       </div>
       <div className="text-2xl font-bold text-amber-400">
         {theme.celebrationLine}
@@ -34,6 +41,15 @@ export function LevelCompleteScreen({
       <div className="text-5xl font-bold text-amber-400 animate-pulse-scale">
         🏆 Level {level.id} Complete!
       </div>
+
+      {/* Location-crossing banner — shown when entering a new tier */}
+      {newLocation && (
+        <div className="w-full rounded-3xl p-5 bg-slate-700 border-2 border-amber-400/40 shadow-xl animate-bounce-in text-center">
+          <div className="text-4xl mb-1">{newLocation.icon}</div>
+          <div className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">New location unlocked!</div>
+          <div className="text-2xl font-bold text-slate-100">{newLocation.name}</div>
+        </div>
+      )}
 
       {nextLevel ? (
         <div
