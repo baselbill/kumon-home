@@ -105,6 +105,21 @@ export function resetGame(): GameSave {
 
 // ─── Multi-profile API ────────────────────────────────────────
 
+const SAVE_VERSION = 2
+
+export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
+  return {
+    ...DEFAULT_SAVE,
+    version: SAVE_VERSION,
+    profileId: '',
+    profileName: 'Player',
+    themeKey: 'dinosaurs',
+    readerMode: false,
+    adaptiveState: {},
+    ...raw,
+  } as ProfileSave
+}
+
 /**
  * Load all profiles from localStorage.
  * Migration: if no profiles exist yet but an old single-profile save does,
@@ -117,7 +132,9 @@ export function loadProfiles(): ProfileSave[] {
     const raw = localStorage.getItem(PROFILES_KEY)
     if (raw) {
       const parsed: ProfileSave[] = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(p => migrateProfile(p as Record<string, unknown>))
+      }
     }
 
     // Migration path: existing single-profile save → profiles[0]
