@@ -56,6 +56,8 @@ export interface ProfileSave extends GameSave {
   themeKey: string       // key matching a Theme in PRESET_THEMES
   readerMode: boolean    // true → show story sentences wrapping problems
   adaptiveState: Record<number, AdaptiveState>  // keyed by level ID
+  companionStage: number       // 0 egg · 1 baby · 2 adult · 3 legend
+  unlockedCompanions: string[] // theme keys owned
 }
 
 const SAVE_KEY = 'kumon_home_v1'
@@ -105,6 +107,29 @@ export function resetGame(): GameSave {
 
 // ─── Multi-profile API ────────────────────────────────────────
 
+const SAVE_VERSION = 3
+
+export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
+  const themeKey = (raw.themeKey as string | undefined) ?? 'dinosaurs'
+  const result = {
+    ...DEFAULT_SAVE,
+    version: SAVE_VERSION,
+    profileId: '',
+    profileName: 'Player',
+    themeKey,
+    readerMode: false,
+    adaptiveState: {},
+    companionStage: 0,
+    unlockedCompanions: [themeKey],
+    ...raw,
+  } as ProfileSave
+  // Invariant: the active theme is always owned
+  if (!result.unlockedCompanions.includes(result.themeKey)) {
+    result.unlockedCompanions = [result.themeKey, ...result.unlockedCompanions]
+  }
+  return result
+}
+
 /**
  * Load all profiles from localStorage.
  * Migration: if no profiles exist yet but an old single-profile save does,
@@ -117,22 +142,23 @@ export function loadProfiles(): ProfileSave[] {
     const raw = localStorage.getItem(PROFILES_KEY)
     if (raw) {
       const parsed: ProfileSave[] = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(p => migrateProfile(p as unknown as Record<string, unknown>))
+      }
     }
 
     // Migration path: existing single-profile save → profiles[0]
     const legacy = localStorage.getItem(SAVE_KEY)
     if (legacy) {
       const parsed = JSON.parse(legacy)
-      const migrated: ProfileSave = {
-        ...DEFAULT_SAVE,
+      const migrated = migrateProfile({
         ...parsed,
         profileId: 'profile-legacy',
         profileName: 'Player',
-        themeKey: 'dinosaurs',
+        themeKey: parsed.themeKey ?? 'dinosaurs',
         readerMode: false,
         adaptiveState: {},
-      }
+      })
       saveProfiles([migrated])
       return [migrated]
     }
@@ -187,6 +213,8 @@ export function createProfile(
     themeKey,
     readerMode,
     adaptiveState: {},
+    companionStage: 0,
+    unlockedCompanions: [themeKey],
   }
 }
 

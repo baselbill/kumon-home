@@ -2,6 +2,13 @@
 // Each theme gives a child their own "world" to count and calculate in.
 // Visual layer works for non-readers (emoji only); narration layer adds text for readers.
 
+export interface ThemeLocation {
+  name: string                  // "Egg Valley"
+  levelRange: [number, number]  // [1, 5] — inclusive
+  storyHook: string             // shown on level-complete within this tier
+  icon: string                  // emoji for the location
+}
+
 export interface Theme {
   key: string
   label: string
@@ -13,6 +20,10 @@ export interface Theme {
   /** Short inline feedback shown after a correct answer in the game screen */
   shortFeedback: string
   soundStyle: 'roar' | 'laser' | 'splash' | 'chime' | 'pop'
+  locations: ThemeLocation[]   // exactly 4, covering levels 1–20
+  /** Companion evolution — egg → baby → adult → legend */
+  evolutionStages: [string, string, string, string]
+  evolutionLabels: [string, string, string, string]
 }
 
 export const PRESET_THEMES: Theme[] = [
@@ -26,6 +37,14 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: 'Your dinosaurs are SO proud! 🦕',
     shortFeedback: 'RAWR!',
     soundStyle: 'roar',
+    locations: [
+      { name: 'Egg Valley', levelRange: [1, 5], icon: '🥚', storyHook: 'You crack the egg! A tiny dinosaur blinks up at you. 🥚' },
+      { name: 'Fern Forest', levelRange: [6, 10], icon: '🌿', storyHook: 'Tall ferns part before you as you stomp deeper in. 🌿' },
+      { name: 'Lava Plateau', levelRange: [11, 15], icon: '🌋', storyHook: 'The volcano rumbles — your dinosaur roars right back! 🌋' },
+      { name: 'Dino Peak', levelRange: [16, 20], icon: '⛰️', storyHook: 'You stand at the peak of the world. All dinosaurs cheer! ⛰️' },
+    ],
+    evolutionStages: ['🥚', '🦎', '🦕', '🦖'],
+    evolutionLabels: ['Egg', 'Hatchling', 'Sauropod', 'T-Rex'],
   },
   {
     key: 'space',
@@ -37,6 +56,14 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: "You're a star! 🚀",
     shortFeedback: 'Zoom!',
     soundStyle: 'laser',
+    locations: [
+      { name: 'Launch Pad', levelRange: [1, 5], icon: '🛸', storyHook: '10… 9… 8… BLAST OFF! The stars are waiting! 🚀' },
+      { name: 'Asteroid Belt', levelRange: [6, 10], icon: '☄️', storyHook: 'You loop through the asteroids without a scratch! ☄️' },
+      { name: 'Nebula Drift', levelRange: [11, 15], icon: '🌌', storyHook: 'Colours pour past the windows — you\'re deep in space! 🌌' },
+      { name: 'Starfall Station', levelRange: [16, 20], icon: '🌟', storyHook: 'The whole galaxy sparkles around you. You made it! 🌟' },
+    ],
+    evolutionStages: ['🌑', '🛸', '🚀', '🌟'],
+    evolutionLabels: ['Dark Matter', 'Cruiser', 'Rocket', 'Supernova'],
   },
   {
     key: 'ocean',
@@ -48,6 +75,14 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: 'Splashing through math! 🐬',
     shortFeedback: 'Splash!',
     soundStyle: 'splash',
+    locations: [
+      { name: 'Sunny Shallows', levelRange: [1, 5], icon: '🏖️', storyHook: 'Tiny fish dart past your fins as you dive in! 🐠' },
+      { name: 'Coral Kingdom', levelRange: [6, 10], icon: '🪸', storyHook: 'Coral towers stretch up like a colourful underwater city! 🪸' },
+      { name: 'Midnight Trench', levelRange: [11, 15], icon: '🌊', storyHook: 'It\'s dark and glittery and magical down here! 🌊' },
+      { name: 'Pearl Grotto', levelRange: [16, 20], icon: '🐚', storyHook: 'You find the pearl the ocean has been hiding! 🐚' },
+    ],
+    evolutionStages: ['🥚', '🐟', '🐬', '🐋'],
+    evolutionLabels: ['Egg', 'Minnow', 'Dolphin', 'Blue Whale'],
   },
   {
     key: 'jungle',
@@ -59,6 +94,14 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: 'Monkey math genius! 🐒',
     shortFeedback: 'Bananas!',
     soundStyle: 'roar',
+    locations: [
+      { name: 'River Camp', levelRange: [1, 5], icon: '🌴', storyHook: 'The jungle hums with sounds. Your adventure begins! 🌴' },
+      { name: 'Treetop Village', levelRange: [6, 10], icon: '🌳', storyHook: 'You leap into the treetops and can see for miles! 🌳' },
+      { name: 'Mist Valley', levelRange: [11, 15], icon: '🌿', storyHook: 'Mist swirls around giant leaves as you push forward! 🌿' },
+      { name: 'Golden Canopy', levelRange: [16, 20], icon: '✨', storyHook: 'You burst through the canopy into golden sunlight! ✨' },
+    ],
+    evolutionStages: ['🌱', '🐒', '🦍', '🌴'],
+    evolutionLabels: ['Sprout', 'Monkey', 'Gorilla', 'Jungle King'],
   },
   {
     key: 'unicorns',
@@ -70,6 +113,14 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: 'Pure magic! 🦄',
     shortFeedback: 'Magic!',
     soundStyle: 'chime',
+    locations: [
+      { name: 'Sparkle Meadow', levelRange: [1, 5], icon: '🌸', storyHook: 'Flowers light up where you step. Magic is real! 🌸' },
+      { name: 'Rainbow Bridge', levelRange: [6, 10], icon: '🌈', storyHook: 'You gallop across the rainbow, hooves sparkling! 🌈' },
+      { name: 'Crystal Cavern', levelRange: [11, 15], icon: '💎', storyHook: 'Crystals hum with ancient unicorn magic all around you! 💎' },
+      { name: 'Moonrise Summit', levelRange: [16, 20], icon: '🌙', storyHook: 'A moonbeam crowns your horn. You are legendary! 🌙' },
+    ],
+    evolutionStages: ['⭐', '🌸', '🦄', '🌈'],
+    evolutionLabels: ['Stardust', 'Foal', 'Unicorn', 'Rainbow'],
   },
   {
     key: 'robots',
@@ -81,6 +132,14 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: 'System: AMAZING! 🤖',
     shortFeedback: 'BEEP BOOP!',
     soundStyle: 'laser',
+    locations: [
+      { name: 'Assembly Bay', levelRange: [1, 5], icon: '⚙️', storyHook: 'Systems online! All gears turning! Let\'s go! ⚙️' },
+      { name: 'Circuit City', levelRange: [6, 10], icon: '🔌', storyHook: 'A million lights blink in perfect patterns! 🔌' },
+      { name: 'Code Sector', levelRange: [11, 15], icon: '💻', storyHook: 'Processing power: MAXIMUM. You can do anything! 💻' },
+      { name: 'Mainframe Core', levelRange: [16, 20], icon: '🤖', storyHook: 'CORE UNLOCKED. You are the greatest robot ever built! 🤖' },
+    ],
+    evolutionStages: ['🔩', '⚙️', '🤖', '🦾'],
+    evolutionLabels: ['Bolt', 'Gear', 'Robot', 'Cyborg'],
   },
   {
     key: 'cats',
@@ -92,8 +151,28 @@ export const PRESET_THEMES: Theme[] = [
     celebrationLine: 'Purrfect! 😺',
     shortFeedback: 'Purr!',
     soundStyle: 'pop',
+    locations: [
+      { name: 'Sunny Windowsill', levelRange: [1, 5], icon: '🪟', storyHook: 'You find the perfect sunny spot and stretch out! 😺' },
+      { name: 'Garden Rooftop', levelRange: [6, 10], icon: '🏡', storyHook: 'You leap from roof to roof without looking down! 🏡' },
+      { name: 'Night Alley', levelRange: [11, 15], icon: '🌙', storyHook: 'The night belongs to you. Every shadow is yours! 🌙' },
+      { name: 'Ancient Tower', levelRange: [16, 20], icon: '🗼', storyHook: 'You claim the tower! Cats will tell of this day! 🗼' },
+    ],
+    evolutionStages: ['🐾', '🐱', '😺', '👑'],
+    evolutionLabels: ['Kitten', 'Cat', 'Cheshire', 'Legend'],
   },
 ]
+
+/**
+ * Return the ThemeLocation that covers the given level ID.
+ * Falls back to the first location if the level is out of range.
+ */
+export function getLocationForLevel(theme: Theme, levelId: number): ThemeLocation {
+  return (
+    theme.locations.find(
+      loc => levelId >= loc.levelRange[0] && levelId <= loc.levelRange[1]
+    ) ?? theme.locations[0]
+  )
+}
 
 /**
  * Resolve a free-text string to the closest preset theme.

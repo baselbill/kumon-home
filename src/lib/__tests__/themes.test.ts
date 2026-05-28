@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PRESET_THEMES, resolveTheme } from '../themes'
+import { PRESET_THEMES, resolveTheme, getLocationForLevel } from '../themes'
 
 describe('PRESET_THEMES', () => {
   it('has 7 themes', () => {
@@ -32,6 +32,68 @@ describe('PRESET_THEMES', () => {
   it('shortFeedback is non-empty for all presets', () => {
     for (const theme of PRESET_THEMES) {
       expect(theme.shortFeedback.length).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('ThemeLocation', () => {
+  it('every theme has exactly 4 locations', () => {
+    for (const theme of PRESET_THEMES) {
+      expect(theme.locations).toHaveLength(4)
+    }
+  })
+
+  it('all location ranges cover 1–20 contiguously with no gaps or overlaps', () => {
+    for (const theme of PRESET_THEMES) {
+      const sorted = [...theme.locations].sort((a, b) => a.levelRange[0] - b.levelRange[0])
+      expect(sorted[0].levelRange[0]).toBe(1)
+      expect(sorted[3].levelRange[1]).toBe(20)
+      for (let i = 0; i < sorted.length - 1; i++) {
+        expect(sorted[i].levelRange[1] + 1).toBe(sorted[i + 1].levelRange[0])
+      }
+    }
+  })
+
+  it('all locations have required fields', () => {
+    for (const theme of PRESET_THEMES) {
+      for (const loc of theme.locations) {
+        expect(loc.name).toBeTruthy()
+        expect(loc.icon).toBeTruthy()
+        expect(loc.storyHook).toBeTruthy()
+        expect(loc.levelRange).toHaveLength(2)
+        expect(loc.levelRange[0]).toBeLessThan(loc.levelRange[1])
+      }
+    }
+  })
+})
+
+describe('getLocationForLevel', () => {
+  const dino = PRESET_THEMES[0] // dinosaurs
+
+  it('returns the location covering a given level', () => {
+    expect(getLocationForLevel(dino, 1).levelRange[0]).toBe(1)
+    expect(getLocationForLevel(dino, 5).levelRange[1]).toBe(5)
+    expect(getLocationForLevel(dino, 6).levelRange[0]).toBe(6)
+    expect(getLocationForLevel(dino, 10).levelRange[1]).toBe(10)
+    expect(getLocationForLevel(dino, 11).levelRange[0]).toBe(11)
+    expect(getLocationForLevel(dino, 15).levelRange[1]).toBe(15)
+    expect(getLocationForLevel(dino, 16).levelRange[0]).toBe(16)
+    expect(getLocationForLevel(dino, 20).levelRange[1]).toBe(20)
+  })
+
+  it('boundaries return different locations on each side', () => {
+    expect(getLocationForLevel(dino, 5).name).not.toBe(getLocationForLevel(dino, 6).name)
+    expect(getLocationForLevel(dino, 10).name).not.toBe(getLocationForLevel(dino, 11).name)
+    expect(getLocationForLevel(dino, 15).name).not.toBe(getLocationForLevel(dino, 16).name)
+  })
+
+  it('works correctly for all 7 themes', () => {
+    for (const theme of PRESET_THEMES) {
+      expect(getLocationForLevel(theme, 1).levelRange[0]).toBe(1)
+      expect(getLocationForLevel(theme, 20).levelRange[1]).toBe(20)
+      // mid-tier level should not be the first or last location
+      expect(getLocationForLevel(theme, 8).levelRange[0]).toBeGreaterThan(1)
+      expect(getLocationForLevel(theme, 13).levelRange[1]).toBeLessThan(20)
     }
   })
 })
