@@ -11,6 +11,7 @@ import { Problem, generateSession, narrate } from '@/lib/problems'
 import {
   LevelProgress,
   ProfileSave,
+  WeakPair,
   loadProfiles,
   saveProfiles,
   getActiveProfileId,
@@ -38,6 +39,17 @@ interface ProblemAttempt {
   operand1: number
   operand2: number | null
   operator: Problem['operator']
+}
+
+function mergeWeakPairs(existing: WeakPair[], incoming: WeakPair[]): WeakPair[] {
+  const map = new Map<string, WeakPair>()
+  for (const p of existing) map.set(`${p.a}${p.op}${p.b}`, p)
+  for (const p of incoming) {
+    const key = `${p.a}${p.op}${p.b}`
+    const prev = map.get(key)
+    map.set(key, { ...p, misses: (prev?.misses ?? 0) + p.misses })
+  }
+  return Array.from(map.values()).sort((a, b) => b.misses - a.misses).slice(0, 5)
 }
 
 interface SessionResult {
@@ -1150,8 +1162,8 @@ function GameScreen({
         </div>
       </div>
 
-      {/* Progress dots */}
-      <ProgressDots total={level.problemsPerSession} current={problemIndex} />
+      {/* Progress dots — extends when problems are re-queued */}
+      <ProgressDots total={problems.length} current={problemIndex} />
 
       {/* Problem card */}
       <div
@@ -1497,6 +1509,7 @@ export default function MathGame() {
   const sessionStartTimeRef = useRef<number>(Date.now())
   const sessionAttemptsRef = useRef<ProblemAttempt[]>([])
   const sessionCorrectRef = useRef(0)  // mirror of sessionCorrect for closure-safe endSession
+  const requeuedSet = useRef<Set<string>>(new Set())  // problem IDs already re-queued this session
 
   // ── Live session timer ────────────────────────────────────
   const [sessionElapsedSec, setSessionElapsedSec] = useState(0)
@@ -1569,6 +1582,7 @@ export default function MathGame() {
     setSessionResult(null)
     setFloatingStars([])
     sessionAttemptsRef.current = []
+    requeuedSet.current = new Set()
     problemStartTime.current = Date.now()
     sessionStartTimeRef.current = Date.now()
     setSessionElapsedSec(0)
@@ -1630,23 +1644,31 @@ export default function MathGame() {
     // Auto-advance after delay
     const delay = isRight ? 1400 : 2400
     feedbackTimer.current = setTimeout(() => {
-      advanceProblem(isRight, level)
+      advanceProblem(isRight, level, problem, problems.length)
     }, delay)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedback, userAnswer, activeLevelId, problems, problemIndex, theme.soundStyle])
 
   // ── Advance to next problem or end session ────────────────
   const advanceProblem = useCallback(
-    (wasCorrect: boolean, level: Level) => {
+    (wasCorrect: boolean, level: Level, currentProblem: Problem, currentLength: number) => {
       const nextIndex = problemIndex + 1
+      let sessionEnds = nextIndex >= currentLength
 
-      if (nextIndex >= level.problemsPerSession) {
+      // Layer 1: re-queue wrong answers once per problem
+      if (!wasCorrect && !requeuedSet.current.has(currentProblem.id)) {
+        requeuedSet.current.add(currentProblem.id)
+        setProblems(prev => [...prev, { ...currentProblem }])
+        sessionEnds = false
+      }
+
+      if (sessionEnds) {
         endSession(wasCorrect, level)
       } else {
         setProblemIndex(nextIndex)
         setUserAnswer('')
         setFeedback('none')
-        problemStartTime.current = Date.now()  // reset timer for next problem
+        problemStartTime.current = Date.now()
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1683,6 +1705,21 @@ export default function MathGame() {
           offsetDirection = 'down'
         }
       }
+
+      // ── Layer 2: compute weak pairs from wrong answers ─────
+      const wrongAttempts = attempts.filter(a => !a.correct && a.operand2 !== null && a.operator)
+      const pairMap = new Map<string, WeakPair>()
+      for (const a of wrongAttempts) {
+        const key = `${a.operand1}${a.operator}${a.operand2}`
+        const prev = pairMap.get(key)
+        pairMap.set(key, {
+          a: a.operand1,
+          b: a.operand2 as number,
+          op: a.operator as string,
+          misses: (prev?.misses ?? 0) + 1,
+        })
+      }
+      const sessionWeakPairs = Array.from(pairMap.values())
 
       // D2: All profile reads + writes happen inside the functional updater
       // so they always operate on the latest state, never a stale snapshot.
@@ -1737,6 +1774,10 @@ export default function MathGame() {
             [level.id]: {
               maxOperandOffset: resolvedOffset,
               lastUpdated: new Date().toISOString(),
+              weakPairs: mergeWeakPairs(
+                prof.adaptiveState?.[level.id]?.weakPairs ?? [],
+                sessionWeakPairs
+              ),
             },
           },
         }

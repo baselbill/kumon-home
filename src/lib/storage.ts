@@ -33,11 +33,17 @@ export interface GameSave {
 // Adaptive difficulty state — stored per profile per level
 // ─────────────────────────────────────────────────────────────
 
+export interface WeakPair {
+  a: number
+  b: number
+  op: string
+  misses: number
+}
+
 export interface AdaptiveState {
-  /** Additive offset on Level.maxOperand. Default 0, range [-2, +3]. */
   maxOperandOffset: number
-  /** ISO timestamp of last session that updated this state. */
   lastUpdated: string
+  weakPairs?: WeakPair[]
 }
 
 // ─────────────────────────────────────────────────────────────
