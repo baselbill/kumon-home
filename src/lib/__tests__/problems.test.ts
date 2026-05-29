@@ -298,67 +298,70 @@ describe('generateProblem()', () => {
 // ── getStartingLevel() ───────────────────────────────────────────────────────
 
 describe('getStartingLevel()', () => {
-  it('age ≤ 4 → level 1', () => {
-    expect(getStartingLevel(4)).toBe(1)
+  it('age ≤ 3 → level 1 (Count to 3)', () => {
     expect(getStartingLevel(3)).toBe(1)
     expect(getStartingLevel(1)).toBe(1)
   })
 
-  it('age 5 → level 2', () => {
-    expect(getStartingLevel(5)).toBe(2)
+  it('age 4 → level 2 (Count to 5)', () => {
+    expect(getStartingLevel(4)).toBe(2)
   })
 
-  it('age 6 → level 3', () => {
-    expect(getStartingLevel(6)).toBe(3)
+  it('age 5 → level 3 (Count to 10)', () => {
+    expect(getStartingLevel(5)).toBe(3)
   })
 
-  it('age 7 → level 5', () => {
-    expect(getStartingLevel(7)).toBe(5)
+  it('age 6 → level 4 (Add to 5)', () => {
+    expect(getStartingLevel(6)).toBe(4)
   })
 
-  it('age 8 → level 7', () => {
-    expect(getStartingLevel(8)).toBe(7)
+  it('age 7 → level 6 (Add to 10 fast)', () => {
+    expect(getStartingLevel(7)).toBe(6)
   })
 
-  it('age 9 → level 9', () => {
-    expect(getStartingLevel(9)).toBe(9)
+  it('age 8 → level 8 (Subtract from 5)', () => {
+    expect(getStartingLevel(8)).toBe(8)
   })
 
-  it('age 10 → level 10 (Math Master)', () => {
-    expect(getStartingLevel(10)).toBe(10)
+  it('age 9 → level 10 (Subtract from 20)', () => {
+    expect(getStartingLevel(9)).toBe(10)
   })
 
-  it('age 11 → level 11 (Multiply by 2, 5, 10)', () => {
-    expect(getStartingLevel(11)).toBe(11)
+  it('age 10 → level 11 (Math Master)', () => {
+    expect(getStartingLevel(10)).toBe(11)
   })
 
-  it('age 12 → level 13 (Times Tables)', () => {
-    expect(getStartingLevel(12)).toBe(13)
+  it('age 11 → level 12 (Multiply by 2, 5, 10)', () => {
+    expect(getStartingLevel(11)).toBe(12)
   })
 
-  it('age 13 → level 15 (Bigger Multiply)', () => {
-    expect(getStartingLevel(13)).toBe(15)
+  it('age 12 → level 14 (Times Tables)', () => {
+    expect(getStartingLevel(12)).toBe(14)
   })
 
-  it('age 14 → level 17 (Powers)', () => {
-    expect(getStartingLevel(14)).toBe(17)
+  it('age 13 → level 16 (Bigger Multiply)', () => {
+    expect(getStartingLevel(13)).toBe(16)
   })
 
-  it('age 15 → level 19 (Percentages)', () => {
-    expect(getStartingLevel(15)).toBe(19)
+  it('age 14 → level 18 (Powers)', () => {
+    expect(getStartingLevel(14)).toBe(18)
   })
 
-  it('age 16+ → level 20 (Algebra, full curriculum)', () => {
-    expect(getStartingLevel(16)).toBe(20)
-    expect(getStartingLevel(17)).toBe(20)
-    expect(getStartingLevel(99)).toBe(20)
+  it('age 15 → level 20 (Percentages)', () => {
+    expect(getStartingLevel(15)).toBe(20)
   })
 
-  it('always returns a value between 1 and 20 inclusive', () => {
+  it('age 16+ → level 21 (Algebra, full curriculum)', () => {
+    expect(getStartingLevel(16)).toBe(21)
+    expect(getStartingLevel(17)).toBe(21)
+    expect(getStartingLevel(99)).toBe(21)
+  })
+
+  it('always returns a value between 1 and 21 inclusive', () => {
     for (let age = 1; age <= 20; age++) {
       const level = getStartingLevel(age)
       expect(level).toBeGreaterThanOrEqual(1)
-      expect(level).toBeLessThanOrEqual(20)
+      expect(level).toBeLessThanOrEqual(21)
     }
   })
 

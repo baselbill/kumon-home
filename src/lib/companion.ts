@@ -12,12 +12,12 @@ const COMPANION_UNLOCK_ORDER = [
  * Derive companion stage and any newly unlocked companions from profile state.
  *
  * Stage thresholds (based on highestUnlockedLevel):
- *   ≥ 5  → stage 1 (baby)
- *   ≥ 10 → stage 2 (adult)
- *   > 20 → stage 3 (legend)
+ *   ≥ 6  → stage 1 (baby)
+ *   ≥ 11 → stage 2 (adult)
+ *   > 21 → stage 3 (legend)
  *
- * Companion unlock milestones — 1 new companion at levels 5, 10, 15;
- * all remaining companions at level 20. Idempotent: already-owned
+ * Companion unlock milestones — 1 new companion at levels 6, 11, 16;
+ * all remaining companions at level 21. Idempotent: already-owned
  * companions are never re-added, so calling twice with the same input
  * returns an empty newlyUnlocked list.
  */
@@ -30,9 +30,9 @@ export function computeCompanionProgress(profile: {
 
   // Stage
   const stage =
-    highestUnlockedLevel > 20 ? 3
-    : highestUnlockedLevel >= 10 ? 2
-    : highestUnlockedLevel >= 5 ? 1
+    highestUnlockedLevel > 21 ? 3
+    : highestUnlockedLevel >= 11 ? 2
+    : highestUnlockedLevel >= 6 ? 1
     : 0
 
   // Build the ordered list of companions that can be unlocked (excluding the active theme)
@@ -40,15 +40,15 @@ export function computeCompanionProgress(profile: {
   const owned = new Set(unlockedCompanions)
 
   // Compute how many companions should be unlocked by now.
-  // Milestones 5 / 10 / 15: +1 each.  Milestone 20: all remaining.
+  // Milestones 6 / 11 / 16: +1 each.  Milestone 21: all remaining.
   let expectedCount = 0
-  if (highestUnlockedLevel >= 20) {
+  if (highestUnlockedLevel >= 21) {
     expectedCount = unlockOrder.length // unlock everything at the final milestone
-  } else if (highestUnlockedLevel >= 15) {
+  } else if (highestUnlockedLevel >= 16) {
     expectedCount = 3
-  } else if (highestUnlockedLevel >= 10) {
+  } else if (highestUnlockedLevel >= 11) {
     expectedCount = 2
-  } else if (highestUnlockedLevel >= 5) {
+  } else if (highestUnlockedLevel >= 6) {
     expectedCount = 1
   }
 

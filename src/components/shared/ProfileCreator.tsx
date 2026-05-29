@@ -51,8 +51,8 @@ export function ProfileCreator({
         </label>
         <div className="flex items-center gap-3 bg-slate-700/50 rounded-xl p-3">
           <button
-            onClick={() => setAge(a => a == null ? null : Math.max(4, a - 1))}
-            disabled={age == null || age <= 4}
+            onClick={() => setAge(a => a == null ? null : Math.max(3, a - 1))}
+            disabled={age == null || age <= 3}
             className="w-10 h-10 rounded-full bg-slate-700 border-2 border-slate-600 text-xl font-bold text-slate-100 flex items-center justify-center active:scale-95 disabled:opacity-30"
           >−</button>
           <div className="flex-1 text-center">
@@ -60,7 +60,7 @@ export function ProfileCreator({
               <span className="text-3xl font-bold text-slate-100">{age}</span>
             ) : (
               <button
-                onClick={() => setAge(6)}
+                onClick={() => setAge(5)}
                 className="text-sm text-amber-400 font-semibold underline underline-offset-2"
               >
                 Tap to set age
@@ -68,7 +68,7 @@ export function ProfileCreator({
             )}
           </div>
           <button
-            onClick={() => setAge(a => Math.min(16, (a ?? 5) + 1))}
+            onClick={() => setAge(a => Math.min(16, (a ?? 4) + 1))}
             disabled={age != null && age >= 16}
             className="w-10 h-10 rounded-full bg-slate-700 border-2 border-slate-600 text-xl font-bold text-slate-100 flex items-center justify-center active:scale-95 disabled:opacity-30"
           >+</button>

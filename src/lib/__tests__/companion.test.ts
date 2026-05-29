@@ -4,79 +4,79 @@ import { computeCompanionProgress } from '../companion'
 const base = { themeKey: 'dinosaurs', unlockedCompanions: ['dinosaurs'] }
 
 describe('computeCompanionProgress — stage', () => {
-  it('stage 0 at levels 1–4', () => {
-    for (const lvl of [1, 2, 3, 4]) {
+  it('stage 0 at levels 1–5', () => {
+    for (const lvl of [1, 2, 3, 4, 5]) {
       expect(computeCompanionProgress({ ...base, highestUnlockedLevel: lvl }).stage).toBe(0)
     }
   })
 
-  it('stage 1 at levels 5–9', () => {
-    for (const lvl of [5, 6, 7, 8, 9]) {
+  it('stage 1 at levels 6–10', () => {
+    for (const lvl of [6, 7, 8, 9, 10]) {
       expect(computeCompanionProgress({ ...base, highestUnlockedLevel: lvl }).stage).toBe(1)
     }
   })
 
-  it('stage 2 at levels 10–20', () => {
-    for (const lvl of [10, 11, 15, 19, 20]) {
+  it('stage 2 at levels 11–21', () => {
+    for (const lvl of [11, 12, 16, 20, 21]) {
       expect(computeCompanionProgress({ ...base, highestUnlockedLevel: lvl }).stage).toBe(2)
     }
   })
 
-  it('stage 3 when highestUnlockedLevel > 20 (all levels beaten)', () => {
-    expect(computeCompanionProgress({ ...base, highestUnlockedLevel: 21 }).stage).toBe(3)
+  it('stage 3 when highestUnlockedLevel > 21 (all levels beaten)', () => {
+    expect(computeCompanionProgress({ ...base, highestUnlockedLevel: 22 }).stage).toBe(3)
   })
 })
 
 describe('computeCompanionProgress — companion unlocks', () => {
-  it('no unlock below level 5', () => {
-    expect(computeCompanionProgress({ ...base, highestUnlockedLevel: 4 }).newlyUnlocked).toHaveLength(0)
+  it('no unlock below level 6', () => {
+    expect(computeCompanionProgress({ ...base, highestUnlockedLevel: 5 }).newlyUnlocked).toHaveLength(0)
   })
 
-  it('unlocks 1 companion at milestone 5', () => {
-    const result = computeCompanionProgress({ ...base, highestUnlockedLevel: 5 })
+  it('unlocks 1 companion at milestone 6', () => {
+    const result = computeCompanionProgress({ ...base, highestUnlockedLevel: 6 })
     expect(result.newlyUnlocked).toHaveLength(1)
     expect(result.newlyUnlocked[0]).not.toBe('dinosaurs') // never the active theme
   })
 
-  it('unlocks 1 more at milestone 10 (cumulative = 2)', () => {
-    // Already have the milestone-5 companion
-    const after5 = computeCompanionProgress({ ...base, highestUnlockedLevel: 5 })
-    const profile10 = {
+  it('unlocks 1 more at milestone 11 (cumulative = 2)', () => {
+    // Already have the milestone-6 companion
+    const after6 = computeCompanionProgress({ ...base, highestUnlockedLevel: 6 })
+    const profile11 = {
       ...base,
-      highestUnlockedLevel: 10,
-      unlockedCompanions: ['dinosaurs', ...after5.newlyUnlocked],
+      highestUnlockedLevel: 11,
+      unlockedCompanions: ['dinosaurs', ...after6.newlyUnlocked],
     }
-    const result = computeCompanionProgress(profile10)
+    const result = computeCompanionProgress(profile11)
     expect(result.newlyUnlocked).toHaveLength(1)
   })
 
-  it('unlocks 1 more at milestone 15 (cumulative = 3)', () => {
-    const profile15 = {
+  it('unlocks 1 more at milestone 16 (cumulative = 3)', () => {
+    const profile16 = {
       ...base,
-      highestUnlockedLevel: 15,
+      highestUnlockedLevel: 16,
       unlockedCompanions: ['dinosaurs', 'space', 'ocean'],
     }
-    const result = computeCompanionProgress(profile15)
+    const result = computeCompanionProgress(profile16)
     expect(result.newlyUnlocked).toHaveLength(1)
   })
 
-  it('unlocks all remaining at milestone 20', () => {
+  it('unlocks all remaining at milestone 21', () => {
     // Only have 3 (base + 2 earned)
-    const profile20 = {
+    const profile21 = {
       ...base,
-      highestUnlockedLevel: 20,
+      highestUnlockedLevel: 21,
       unlockedCompanions: ['dinosaurs', 'space', 'ocean'],
     }
-    const result = computeCompanionProgress(profile20)
+    const result = computeCompanionProgress(profile21)
     // Should unlock the remaining 4 (jungle, unicorns, robots, cats)
     expect(result.newlyUnlocked.length).toBeGreaterThanOrEqual(1)
     expect(result.newlyUnlocked).not.toContain('dinosaurs')
   })
 
-  it('all 7 companions owned after milestone 20 if progressed correctly', () => {
+  it('all 7 companions owned after milestone 21 if progressed correctly', () => {
     const fullyProgressed = {
       ...base,
-      highestUnlockedLevel: 20,
+      highestUnlockedLevel: 21,
       unlockedCompanions: ['dinosaurs'], // only own starting theme
     }
     const result = computeCompanionProgress(fullyProgressed)
@@ -89,7 +89,7 @@ describe('computeCompanionProgress — companion unlocks', () => {
   it('idempotent — already unlocked companions are not re-added', () => {
     const profile = {
       themeKey: 'space',
-      highestUnlockedLevel: 10,
+      highestUnlockedLevel: 11,
       unlockedCompanions: ['space', 'dinosaurs', 'ocean'], // already has both expected unlocks
     }
     const result = computeCompanionProgress(profile)
@@ -100,7 +100,7 @@ describe('computeCompanionProgress — companion unlocks', () => {
     for (const themeKey of ['dinosaurs', 'space', 'ocean', 'jungle', 'unicorns', 'robots', 'cats']) {
       const result = computeCompanionProgress({
         themeKey,
-        highestUnlockedLevel: 20,
+        highestUnlockedLevel: 21,
         unlockedCompanions: [themeKey],
       })
       expect(result.newlyUnlocked).not.toContain(themeKey)
@@ -110,7 +110,7 @@ describe('computeCompanionProgress — companion unlocks', () => {
   it('if all companions already owned, newlyUnlocked is empty', () => {
     const allOwned = {
       themeKey: 'dinosaurs',
-      highestUnlockedLevel: 20,
+      highestUnlockedLevel: 21,
       unlockedCompanions: ['dinosaurs', 'space', 'ocean', 'jungle', 'unicorns', 'robots', 'cats'],
     }
     expect(computeCompanionProgress(allOwned).newlyUnlocked).toHaveLength(0)

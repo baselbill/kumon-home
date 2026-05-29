@@ -88,13 +88,14 @@ describe('loadProfiles()', () => {
     expect(profiles[0].themeKey).toBe('dinosaurs')
   })
 
-  it('migration CRITICAL: highestUnlockedLevel=11 sentinel preserved verbatim', () => {
-    // 11 = all-levels-done sentinel — must NOT be clamped to TOTAL_LEVELS (10)
+  it('migration: highestUnlockedLevel shifted +1 for v4→v5 curriculum expansion', () => {
+    // v4 saves had 20 levels; v5 adds "Count to 3" at position 1, shifting all IDs +1
+    // e.g. old sentinel 11 (all-done for old 10-level era) becomes 12
     const legacySave = makeSave({ highestUnlockedLevel: 11 })
     seedStorage(SAVE_KEY, legacySave)
 
     const profiles = loadProfiles()
-    expect(profiles[0].highestUnlockedLevel).toBe(11)
+    expect(profiles[0].highestUnlockedLevel).toBe(12)
   })
 
   it('migration: copies all GameSave fields to migrated profile', () => {
@@ -311,20 +312,20 @@ describe('checkNewAchievements()', () => {
     expect(checkNewAchievements(save)).toContain('stars_200')
   })
 
-  it('level_5 at highestUnlockedLevel = 5', () => {
-    const save = makeSave({ highestUnlockedLevel: 5 })
+  it('level_5 at highestUnlockedLevel = 6', () => {
+    const save = makeSave({ highestUnlockedLevel: 6 })
     expect(checkNewAchievements(save)).toContain('level_5')
   })
 
-  it('level_10 at highestUnlockedLevel = 11 (all-done sentinel)', () => {
-    // After completing level 10, highestUnlockedLevel becomes 11
-    const save = makeSave({ highestUnlockedLevel: 11 })
+  it('level_10 at highestUnlockedLevel = 12 (Math Master done, next level unlocked)', () => {
+    // After completing level 11 (Math Master), highestUnlockedLevel becomes 12
+    const save = makeSave({ highestUnlockedLevel: 12 })
     expect(checkNewAchievements(save)).toContain('level_10')
   })
 
-  it('level_10 NOT earned at highestUnlockedLevel = 10', () => {
-    // Check requires > 10, not >= 10
-    const save = makeSave({ highestUnlockedLevel: 10 })
+  it('level_10 NOT earned at highestUnlockedLevel = 11', () => {
+    // Check requires > 11, not >= 11
+    const save = makeSave({ highestUnlockedLevel: 11 })
     expect(checkNewAchievements(save)).not.toContain('level_10')
   })
 
@@ -369,7 +370,7 @@ describe('checkNewAchievements()', () => {
     const save = makeSave({
       totalCorrectAnswers: 1,
       totalSessionsPlayed: 10,
-      highestUnlockedLevel: 11,
+      highestUnlockedLevel: 12,
       streak: 7,
       totalStars: 200,
     })
