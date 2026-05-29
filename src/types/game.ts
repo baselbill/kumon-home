@@ -1,6 +1,9 @@
 import { Problem } from '@/lib/problems'
 
-export type Screen = 'home' | 'level-select' | 'achievements' | 'playing' | 'session-complete' | 'level-complete' | 'world' | 'shop'
+export type Screen =
+  | 'home' | 'level-select' | 'achievements' | 'playing'
+  | 'session-complete' | 'level-complete' | 'world' | 'shop'
+  | 'parent-pin' | 'parent-pin-set' | 'parent-dashboard' | 'parent-progress' | 'parent-settings'
 export type SubScreen = 'none' | 'achievements' | 'profile-create' | 'profile-edit'
 export type FeedbackState = 'none' | 'correct' | 'wrong'
 

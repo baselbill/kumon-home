@@ -19,6 +19,7 @@ export function HomeScreen({
   onAddProfile,
   onLongPressProfile,
   onOpenWorld,
+  onOpenParent,
 }: {
   profiles: ProfileSave[]
   activeProfile: ProfileSave
@@ -30,6 +31,7 @@ export function HomeScreen({
   onAddProfile: () => void
   onLongPressProfile: (profile: ProfileSave) => void
   onOpenWorld: () => void
+  onOpenParent: () => void
 }) {
   const highestLevel = getLevelById(activeProfile.highestUnlockedLevel)
   const allDone = activeProfile.highestUnlockedLevel > TOTAL_LEVELS
@@ -55,7 +57,14 @@ export function HomeScreen({
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 w-full max-w-sm mx-auto text-center">
+    <div className="relative flex flex-col items-center gap-6 p-6 w-full max-w-sm mx-auto text-center">
+      <button
+        onClick={onOpenParent}
+        className="absolute top-0 right-0 p-2 text-slate-500 hover:text-slate-300 active:scale-90 transition-all rounded-xl"
+        aria-label="Parent settings"
+      >
+        ⚙️
+      </button>
 
       {/* Profile chips */}
       <div className="flex gap-2 flex-wrap justify-center w-full">
