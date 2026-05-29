@@ -35,6 +35,11 @@ import { ParentProgressScreen } from '@/components/screens/ParentProgressScreen'
 import { ParentSettingsScreen } from '@/components/screens/ParentSettingsScreen'
 import { getParentPin } from '@/lib/parentPin'
 
+const THEME_COLOR: Record<string, string> = {
+  dinosaurs: '#F97316', space: '#818CF8', ocean: '#06B6D4', jungle: '#22C55E',
+  unicorns: '#E879F9', robots: '#38BDF8', cats: '#FB7185',
+}
+
 export default function MathGame() {
   const {
     profiles,
@@ -119,20 +124,34 @@ export default function MathGame() {
     return () => window.removeEventListener('keydown', handler)
   }, [screen, handleDigit, handleBackspace, handleSubmit])
 
+  // Derived theme + level colors for CSS vars
+  const themeColor = THEME_COLOR[theme?.key ?? ''] ?? '#FBBF24'
+  const levelColor = activeLevel?.color ?? themeColor
+
+  const rootStyle = {
+    '--theme-color': themeColor,
+    '--level-color': levelColor,
+  } as React.CSSProperties
+
   // ── No profiles yet → show profile creator ────────────────
   if (profiles.length === 0 || !activeProfile) {
     return (
-      <div className="relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden">
-        <ProfileCreator
-          onDone={(name, themeKey, readerMode, age) => {
-            const newProfile = createProfile(name, themeKey, readerMode,
-              age != null ? getStartingLevel(age) : 1)
-            const newProfiles = [newProfile]
-            setProfiles(newProfiles)
-            saveProfiles(newProfiles)
-            switchProfile(newProfile.profileId)
-          }}
-        />
+      <div className="app-root" data-vd="midnight" style={rootStyle}>
+        <div className="ambient">
+          <div className="blob b1" /><div className="blob b2" /><div className="blob b3" /><div className="grain" />
+        </div>
+        <div className="stage" style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <ProfileCreator
+            onDone={(name, themeKey, readerMode, age) => {
+              const newProfile = createProfile(name, themeKey, readerMode,
+                age != null ? getStartingLevel(age) : 1)
+              const newProfiles = [newProfile]
+              setProfiles(newProfiles)
+              saveProfiles(newProfiles)
+              switchProfile(newProfile.profileId)
+            }}
+          />
+        </div>
       </div>
     )
   }
@@ -144,8 +163,13 @@ export default function MathGame() {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className={`relative w-full max-w-sm mx-auto min-h-screen overflow-x-hidden ${isMainScreen ? 'pb-20' : ''}`}>
-      {/* Evolution overlay — full-screen on companion stage-up */}
+    <div className="app-root" data-vd="midnight" style={rootStyle}>
+      {/* Ambient aurora */}
+      <div className="ambient">
+        <div className="blob b1" /><div className="blob b2" /><div className="blob b3" /><div className="grain" />
+      </div>
+
+      {/* Evolution overlay */}
       {pendingEvolution !== null && (
         <EvolutionOverlay
           stage={pendingEvolution}
@@ -154,13 +178,16 @@ export default function MathGame() {
         />
       )}
 
-      {/* Achievement toast overlay */}
+      {/* Achievement toast */}
       {toastAchievement && (
         <AchievementToast
           achievement={toastAchievement}
           onDone={() => setToastAchievement(null)}
         />
       )}
+
+      {/* Stage — scrollable screen area */}
+      <div className="stage">
 
       {/* Profile editor modal (long-press) */}
       {subScreen === 'profile-edit' && editingProfile && (
@@ -238,6 +265,7 @@ export default function MathGame() {
       {screen === 'level-select' && (
         <LevelSelectScreen
           activeProfile={activeProfile}
+          theme={theme}
           onSelect={(id) => { startSession(id); setScreen('playing') }}
           onBack={() => setScreen('home')}
         />
@@ -397,7 +425,9 @@ export default function MathGame() {
         />
       )}
 
-      {/* ── Bottom Nav (main screens only) ── */}
+      </div>{/* end .stage */}
+
+      {/* Bottom Nav — outside stage, rendered as flex child of app-root */}
       {isMainScreen && subScreen === 'none' && (
         <BottomNav
           active={bottomNavActive}
