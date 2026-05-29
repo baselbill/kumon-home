@@ -26,6 +26,9 @@ import { AchievementsScreen } from '@/components/screens/AchievementsScreen'
 import { GameScreen } from '@/components/screens/GameScreen'
 import { SessionCompleteScreen } from '@/components/screens/SessionCompleteScreen'
 import { LevelCompleteScreen } from '@/components/screens/LevelCompleteScreen'
+import { WorldScreen } from '@/components/screens/WorldScreen'
+import { ShopScreen } from '@/components/screens/ShopScreen'
+import { CatalogItem } from '@/lib/catalog'
 
 export default function MathGame() {
   const {
@@ -58,6 +61,9 @@ export default function MathGame() {
     clearPendingEvolution,
     pendingCompanionUnlock,
     clearPendingCompanionUnlock,
+    availableStars,
+    buyAndPlace,
+    removeWorldItem,
   } = useGameState()
 
   const companionStage = activeProfile?.companionStage ?? 0
@@ -86,6 +92,7 @@ export default function MathGame() {
   const [screen, setScreen] = useState<Screen>('home')
   const [subScreen, setSubScreen] = useState<SubScreen>('none')
   const [editingProfile, setEditingProfile] = useState<ProfileSave | null>(null)
+  const [pendingWorldItem, setPendingWorldItem] = useState<CatalogItem | null>(null)
 
   // ── Transition to session-complete when hook sets sessionResult ───
   useEffect(() => {
@@ -125,9 +132,9 @@ export default function MathGame() {
   }
 
   // ── Helpers ───────────────────────────────────────────────
-  const isMainScreen = screen === 'home' || screen === 'level-select' || screen === 'achievements'
-  const bottomNavActive: 'home' | 'levels' | 'awards' =
-    screen === 'level-select' ? 'levels' : screen === 'achievements' ? 'awards' : 'home'
+  const isMainScreen = screen === 'home' || screen === 'level-select' || screen === 'achievements' || screen === 'world'
+  const bottomNavActive: 'home' | 'levels' | 'world' | 'awards' =
+    screen === 'level-select' ? 'levels' : screen === 'achievements' ? 'awards' : screen === 'world' ? 'world' : 'home'
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -199,6 +206,7 @@ export default function MathGame() {
           activeProfile={activeProfile}
           theme={theme}
           companionStage={companionStage}
+          availableStars={availableStars}
           onPlay={() => {
             const lvl = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
             startSession(lvl)
@@ -210,6 +218,7 @@ export default function MathGame() {
             setEditingProfile(profile)
             setSubScreen('profile-edit')
           }}
+          onOpenWorld={() => setScreen('world')}
         />
       )}
 
@@ -303,12 +312,41 @@ export default function MathGame() {
         />
       )}
 
+      {/* ── World ── */}
+      {screen === 'world' && subScreen === 'none' && (
+        <WorldScreen
+          activeProfile={activeProfile}
+          theme={theme}
+          availableStars={availableStars}
+          pendingItem={pendingWorldItem}
+          onBuyAndPlace={(item, x, y) => buyAndPlace(item, x, y)}
+          onRemove={(x, y) => removeWorldItem(x, y)}
+          onOpenShop={() => setScreen('shop')}
+          onCancelPending={() => setPendingWorldItem(null)}
+          onBack={() => setScreen('home')}
+        />
+      )}
+
+      {/* ── Shop ── */}
+      {screen === 'shop' && subScreen === 'none' && (
+        <ShopScreen
+          theme={theme}
+          availableStars={availableStars}
+          onSelectItem={item => {
+            setPendingWorldItem(item)
+            setScreen('world')
+          }}
+          onBack={() => setScreen('world')}
+        />
+      )}
+
       {/* ── Bottom Nav (main screens only) ── */}
       {isMainScreen && subScreen === 'none' && (
         <BottomNav
           active={bottomNavActive}
           onHome={() => { setScreen('home'); setSubScreen('none') }}
           onLevels={() => setScreen('level-select')}
+          onWorld={() => setScreen('world')}
           onAwards={() => setScreen('achievements')}
         />
       )}

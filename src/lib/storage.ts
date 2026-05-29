@@ -50,6 +50,12 @@ export interface AdaptiveState {
 // Multi-profile save
 // ─────────────────────────────────────────────────────────────
 
+export interface PlacedItem {
+  itemId: string
+  x: number  // 0–5
+  y: number  // 0–5
+}
+
 export interface ProfileSave extends GameSave {
   profileId: string
   profileName: string
@@ -58,6 +64,8 @@ export interface ProfileSave extends GameSave {
   adaptiveState: Record<number, AdaptiveState>  // keyed by level ID
   companionStage: number       // 0 egg · 1 baby · 2 adult · 3 legend
   unlockedCompanions: string[] // theme keys owned
+  spentStars: number           // stars spent in the shop; balance = totalStars - spentStars
+  world: PlacedItem[]          // items placed in the 6×6 world grid
 }
 
 const SAVE_KEY = 'kumon_home_v1'
@@ -107,7 +115,7 @@ export function resetGame(): GameSave {
 
 // ─── Multi-profile API ────────────────────────────────────────
 
-const SAVE_VERSION = 3
+const SAVE_VERSION = 4
 
 export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
   const themeKey = (raw.themeKey as string | undefined) ?? 'dinosaurs'
@@ -121,6 +129,8 @@ export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
     adaptiveState: {},
     companionStage: 0,
     unlockedCompanions: [themeKey],
+    spentStars: 0,
+    world: [],
     ...raw,
   } as ProfileSave
   // Invariant: the active theme is always owned
@@ -215,6 +225,8 @@ export function createProfile(
     adaptiveState: {},
     companionStage: 0,
     unlockedCompanions: [themeKey],
+    spentStars: 0,
+    world: [],
   }
 }
 
