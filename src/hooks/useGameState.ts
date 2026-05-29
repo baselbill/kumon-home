@@ -18,6 +18,8 @@ import {
 } from '@/lib/storage'
 import { Theme, PRESET_THEMES } from '@/lib/themes'
 import { computeCompanionProgress } from '@/lib/companion'
+import { CatalogItem } from '@/lib/catalog'
+import { availableStars as computeAvailableStars, placeItem, removeItem } from '@/lib/world'
 import { playCorrectSound, playWrongSound, playLevelCompleteSound } from '@/lib/sounds'
 import { FeedbackState, FloatingStar, ProblemAttempt, SessionResult } from '@/types/game'
 
@@ -464,6 +466,56 @@ export function useGameState() {
     }
   }, [])
 
+  // ── World / shop actions ──────────────────────────────────
+
+  const buyAndPlace = useCallback(
+    (item: CatalogItem, x: number, y: number): boolean => {
+      let success = false
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.profileId === activeProfileId)
+        if (idx === -1) return prev
+        const prof = prev[idx]
+        const balance = computeAvailableStars(prof)
+        if (balance < item.price) return prev
+
+        const currentWorld = prof.world ?? []
+        const result = placeItem(currentWorld, item, x, y)
+        if (result === 'occupied' || result === 'out_of_bounds') return prev
+
+        success = true
+        const next = [...prev]
+        next[idx] = {
+          ...prof,
+          spentStars: (prof.spentStars ?? 0) + item.price,
+          world: result,
+        }
+        saveProfiles(next)
+        return next
+      })
+      return success
+    },
+    [activeProfileId, setProfiles]
+  )
+
+  const removeWorldItem = useCallback(
+    (x: number, y: number): void => {
+      setProfiles(prev => {
+        const idx = prev.findIndex(p => p.profileId === activeProfileId)
+        if (idx === -1) return prev
+        const prof = prev[idx]
+        const next = [...prev]
+        next[idx] = { ...prof, world: removeItem(prof.world ?? [], x, y) }
+        saveProfiles(next)
+        return next
+      })
+    },
+    [activeProfileId, setProfiles]
+  )
+
+  const availableStars = activeProfile
+    ? computeAvailableStars(activeProfile)
+    : 0
+
   // ── Derived values ────────────────────────────────────────
   const activeLevel = getLevelById(activeLevelId)
 
@@ -503,5 +555,9 @@ export function useGameState() {
     clearPendingEvolution,
     pendingCompanionUnlock,
     clearPendingCompanionUnlock,
+    // world / shop
+    buyAndPlace,
+    removeWorldItem,
+    availableStars,
   }
 }

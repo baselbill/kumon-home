@@ -4,6 +4,8 @@ import React, { useRef } from 'react'
 import { CURRICULUM, getLevelById, TOTAL_LEVELS } from '@/lib/curriculum'
 import { ProfileSave } from '@/lib/storage'
 import { Theme, PRESET_THEMES, getLocationForLevel } from '@/lib/themes'
+import { ITEM_CATALOG } from '@/lib/catalog'
+import { getItemAt, GRID_SIZE } from '@/lib/world'
 import { Mascot } from '@/components/shared/Mascot'
 
 export function HomeScreen({
@@ -11,19 +13,25 @@ export function HomeScreen({
   activeProfile,
   theme,
   companionStage,
+  availableStars,
   onPlay,
   onSwitchProfile,
   onAddProfile,
   onLongPressProfile,
+  onOpenWorld,
+  onOpenParent,
 }: {
   profiles: ProfileSave[]
   activeProfile: ProfileSave
   theme: Theme
   companionStage: number
+  availableStars: number
   onPlay: () => void
   onSwitchProfile: (id: string) => void
   onAddProfile: () => void
   onLongPressProfile: (profile: ProfileSave) => void
+  onOpenWorld: () => void
+  onOpenParent: () => void
 }) {
   const highestLevel = getLevelById(activeProfile.highestUnlockedLevel)
   const allDone = activeProfile.highestUnlockedLevel > TOTAL_LEVELS
@@ -49,7 +57,14 @@ export function HomeScreen({
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 w-full max-w-sm mx-auto text-center">
+    <div className="relative flex flex-col items-center gap-6 p-6 w-full max-w-sm mx-auto text-center">
+      <button
+        onClick={onOpenParent}
+        className="absolute top-0 right-0 p-2 text-slate-500 hover:text-slate-300 active:scale-90 transition-all rounded-xl"
+        aria-label="Parent settings"
+      >
+        ⚙️
+      </button>
 
       {/* Profile chips */}
       <div className="flex gap-2 flex-wrap justify-center w-full">
@@ -113,6 +128,44 @@ export function HomeScreen({
           <div className="text-xs text-slate-500">Mastered</div>
         </div>
       </div>
+
+      {/* World thumbnail */}
+      <button
+        onClick={onOpenWorld}
+        className="w-full rounded-2xl border border-white/[0.07] bg-slate-800/50 p-3 flex items-center gap-3 active:scale-95 transition-transform"
+      >
+        <div className="flex flex-col gap-[2px] flex-shrink-0">
+          {Array.from({ length: GRID_SIZE }, (_, row) => (
+            <div key={row} className="flex gap-[2px]">
+              {Array.from({ length: GRID_SIZE }, (_, col) => {
+                const placed = getItemAt(activeProfile.world ?? [], col, row)
+                const catalogItem = placed ? ITEM_CATALOG.find(i => i.id === placed.itemId) : undefined
+                return (
+                  <div
+                    key={col}
+                    className="rounded-[2px] flex items-center justify-center"
+                    style={{ width: 10, height: 10, backgroundColor: placed ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)' }}
+                  >
+                    {catalogItem && (
+                      <span style={{ fontSize: 7, lineHeight: 1 }}>{catalogItem.emoji}</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 text-left">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">My World</div>
+          <div className="text-sm font-bold text-slate-300">
+            {(activeProfile.world ?? []).length} / {GRID_SIZE * GRID_SIZE} items placed
+          </div>
+        </div>
+        <div className="text-amber-400 font-bold text-sm flex items-center gap-1">
+          <span>⭐</span>
+          <span>{availableStars}</span>
+        </div>
+      </button>
 
       {/* Journey progress strip */}
       <div className="w-full">

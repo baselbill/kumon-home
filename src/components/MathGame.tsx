@@ -26,6 +26,14 @@ import { AchievementsScreen } from '@/components/screens/AchievementsScreen'
 import { GameScreen } from '@/components/screens/GameScreen'
 import { SessionCompleteScreen } from '@/components/screens/SessionCompleteScreen'
 import { LevelCompleteScreen } from '@/components/screens/LevelCompleteScreen'
+import { WorldScreen } from '@/components/screens/WorldScreen'
+import { ShopScreen } from '@/components/screens/ShopScreen'
+import { CatalogItem } from '@/lib/catalog'
+import { ParentPinScreen } from '@/components/screens/ParentPinScreen'
+import { ParentDashboardScreen } from '@/components/screens/ParentDashboardScreen'
+import { ParentProgressScreen } from '@/components/screens/ParentProgressScreen'
+import { ParentSettingsScreen } from '@/components/screens/ParentSettingsScreen'
+import { getParentPin } from '@/lib/parentPin'
 
 export default function MathGame() {
   const {
@@ -58,6 +66,9 @@ export default function MathGame() {
     clearPendingEvolution,
     pendingCompanionUnlock,
     clearPendingCompanionUnlock,
+    availableStars,
+    buyAndPlace,
+    removeWorldItem,
   } = useGameState()
 
   const companionStage = activeProfile?.companionStage ?? 0
@@ -86,6 +97,8 @@ export default function MathGame() {
   const [screen, setScreen] = useState<Screen>('home')
   const [subScreen, setSubScreen] = useState<SubScreen>('none')
   const [editingProfile, setEditingProfile] = useState<ProfileSave | null>(null)
+  const [pendingWorldItem, setPendingWorldItem] = useState<CatalogItem | null>(null)
+  const [parentViewingProfileId, setParentViewingProfileId] = useState<string | null>(null)
 
   // ── Transition to session-complete when hook sets sessionResult ───
   useEffect(() => {
@@ -125,9 +138,9 @@ export default function MathGame() {
   }
 
   // ── Helpers ───────────────────────────────────────────────
-  const isMainScreen = screen === 'home' || screen === 'level-select' || screen === 'achievements'
-  const bottomNavActive: 'home' | 'levels' | 'awards' =
-    screen === 'level-select' ? 'levels' : screen === 'achievements' ? 'awards' : 'home'
+  const isMainScreen = screen === 'home' || screen === 'level-select' || screen === 'achievements' || screen === 'world'
+  const bottomNavActive: 'home' | 'levels' | 'world' | 'awards' =
+    screen === 'level-select' ? 'levels' : screen === 'achievements' ? 'awards' : screen === 'world' ? 'world' : 'home'
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -199,6 +212,7 @@ export default function MathGame() {
           activeProfile={activeProfile}
           theme={theme}
           companionStage={companionStage}
+          availableStars={availableStars}
           onPlay={() => {
             const lvl = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
             startSession(lvl)
@@ -210,6 +224,8 @@ export default function MathGame() {
             setEditingProfile(profile)
             setSubScreen('profile-edit')
           }}
+          onOpenWorld={() => setScreen('world')}
+          onOpenParent={() => setScreen(getParentPin() !== null ? 'parent-pin' : 'parent-dashboard')}
         />
       )}
 
@@ -303,12 +319,91 @@ export default function MathGame() {
         />
       )}
 
+      {/* ── Parent PIN (verify existing) ── */}
+      {screen === 'parent-pin' && (
+        <ParentPinScreen
+          mode="verify"
+          onSuccess={() => setScreen('parent-dashboard')}
+          onCancel={() => setScreen('home')}
+        />
+      )}
+
+      {/* ── Parent PIN (set/change) ── */}
+      {screen === 'parent-pin-set' && (
+        <ParentPinScreen
+          mode="set"
+          onSuccess={() => setScreen('parent-settings')}
+          onCancel={() => setScreen('parent-settings')}
+        />
+      )}
+
+      {/* ── Parent Dashboard ── */}
+      {screen === 'parent-dashboard' && (
+        <ParentDashboardScreen
+          profiles={profiles}
+          onViewProgress={id => { setParentViewingProfileId(id); setScreen('parent-progress') }}
+          onViewSettings={id => { setParentViewingProfileId(id); setScreen('parent-settings') }}
+          onClose={() => setScreen('home')}
+        />
+      )}
+
+      {/* ── Parent Progress ── */}
+      {screen === 'parent-progress' && (() => {
+        const p = profiles.find(x => x.profileId === parentViewingProfileId)
+        if (!p) return null
+        return (
+          <ParentProgressScreen
+            profile={p}
+            onBack={() => setScreen('parent-dashboard')}
+          />
+        )
+      })()}
+
+      {/* ── Parent Settings ── */}
+      {screen === 'parent-settings' && (
+        <ParentSettingsScreen
+          profiles={profiles}
+          onUpdateProfile={updateProfile}
+          onBack={() => setScreen('parent-dashboard')}
+          onChangePIN={() => setScreen('parent-pin-set')}
+        />
+      )}
+
+      {/* ── World ── */}
+      {screen === 'world' && subScreen === 'none' && (
+        <WorldScreen
+          activeProfile={activeProfile}
+          theme={theme}
+          availableStars={availableStars}
+          pendingItem={pendingWorldItem}
+          onBuyAndPlace={(item, x, y) => buyAndPlace(item, x, y)}
+          onRemove={(x, y) => removeWorldItem(x, y)}
+          onOpenShop={() => setScreen('shop')}
+          onCancelPending={() => setPendingWorldItem(null)}
+          onBack={() => setScreen('home')}
+        />
+      )}
+
+      {/* ── Shop ── */}
+      {screen === 'shop' && subScreen === 'none' && (
+        <ShopScreen
+          theme={theme}
+          availableStars={availableStars}
+          onSelectItem={item => {
+            setPendingWorldItem(item)
+            setScreen('world')
+          }}
+          onBack={() => setScreen('world')}
+        />
+      )}
+
       {/* ── Bottom Nav (main screens only) ── */}
       {isMainScreen && subScreen === 'none' && (
         <BottomNav
           active={bottomNavActive}
           onHome={() => { setScreen('home'); setSubScreen('none') }}
           onLevels={() => setScreen('level-select')}
+          onWorld={() => setScreen('world')}
           onAwards={() => setScreen('achievements')}
         />
       )}
