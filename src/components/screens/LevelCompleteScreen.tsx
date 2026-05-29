@@ -29,52 +29,43 @@ export function LevelCompleteScreen({
   }, [])
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6 max-w-sm mx-auto text-center">
-      <Confetti />
-      <div className="text-7xl mt-6 animate-bounce">{level.icon}</div>
-      <div className="text-3xl font-bold text-slate-100 animate-bounce-in">
-        {storyHook}
-      </div>
-      <div className="text-2xl font-bold text-amber-400">
-        {theme.celebrationLine}
-      </div>
-      <div className="text-5xl font-bold text-amber-400 animate-pulse-scale">
-        🏆 Level {level.id} Complete!
-      </div>
-
-      {/* Location-crossing banner — shown when entering a new tier */}
-      {newLocation && (
-        <div className="w-full rounded-3xl p-5 bg-slate-700 border-2 border-amber-400/40 shadow-xl animate-bounce-in text-center">
-          <div className="text-4xl mb-1">{newLocation.icon}</div>
-          <div className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">New location unlocked!</div>
-          <div className="text-2xl font-bold text-slate-100">{newLocation.name}</div>
+    <div className="screen screen-enter">
+      <div className="col celebrate" style={{ paddingTop: 26 }}>
+        <Confetti />
+        <div style={{ fontSize: 72 }} className="bounce-in">{level.icon}</div>
+        <div className="h-title bounce-in">{storyHook}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--star)' }}>{theme.celebrationLine}</div>
+        <div style={{ fontSize: 36, fontWeight: 900, color: 'var(--star)' }} className="pulse-scale">
+          🏆 Level {level.id} Complete!
         </div>
-      )}
 
-      {nextLevel ? (
-        <div
-          className="w-full rounded-3xl p-5 text-white shadow-xl animate-bounce-in"
-          style={{ backgroundColor: nextLevel.color }}
-        >
-          <div className="text-sm font-semibold opacity-80 mb-1">Up next →</div>
-          <div className="text-3xl">{nextLevel.icon}</div>
-          <div className="text-xl font-bold mt-1">{nextLevel.name}</div>
-          <div className="text-sm opacity-90">{nextLevel.description}</div>
-        </div>
-      ) : (
-        <div className="w-full rounded-3xl p-5 bg-amber-400 shadow-xl">
-          <div className="text-4xl">🌟</div>
-          <div className="text-xl font-bold text-slate-900 mt-1">You finished ALL levels!</div>
-          <div className="text-sm text-slate-900">You are a true Math Master!</div>
-        </div>
-      )}
+        {newLocation && (
+          <div className="card bounce-in" style={{ padding: 20, width: '100%', textAlign: 'center', border: '2px solid color-mix(in srgb, var(--star) 40%, transparent)' }}>
+            <div style={{ fontSize: 36 }}>{newLocation.icon}</div>
+            <div className="label" style={{ color: 'var(--star)', marginTop: 4 }}>New location unlocked!</div>
+            <div style={{ fontSize: 22, fontWeight: 900, marginTop: 4 }}>{newLocation.name}</div>
+          </div>
+        )}
 
-      <button
-        onClick={onContinue}
-        className="w-full py-4 text-2xl font-bold rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 active:scale-95 transition-transform shadow-lg"
-      >
-        {nextLevel ? `Let's go! ${nextLevel.icon}` : '🏠 Home'}
-      </button>
+        {nextLevel ? (
+          <div className="level-hero bounce-in" style={{ background: nextLevel.color, width: '100%' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.85, marginBottom: 4 }}>Up next →</div>
+            <div className="em">{nextLevel.icon}</div>
+            <h3>{nextLevel.name}</h3>
+            <p>{nextLevel.description}</p>
+          </div>
+        ) : (
+          <div className="level-hero" style={{ background: 'var(--primary)', color: 'var(--on-primary)', width: '100%' }}>
+            <div style={{ fontSize: 36 }}>🌟</div>
+            <h3>You finished ALL levels!</h3>
+            <p>You are a true Math Master!</p>
+          </div>
+        )}
+
+        <button className="btn-primary" onClick={onContinue}>
+          {nextLevel ? `Let's go! ${nextLevel.icon}` : '🏠 Home'}
+        </button>
+      </div>
     </div>
   )
 }

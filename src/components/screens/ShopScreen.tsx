@@ -5,11 +5,8 @@ import { ITEM_CATALOG, CatalogItem, ItemTier } from '@/lib/catalog'
 import { Theme } from '@/lib/themes'
 
 const TIER_ORDER: ItemTier[] = ['common', 'uncommon', 'rare']
-const TIER_LABEL: Record<ItemTier, string> = {
-  common: 'Common',
-  uncommon: 'Uncommon',
-  rare: 'Rare',
-}
+const TIER_LABEL: Record<ItemTier, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' }
+const TIER_COLOR: Record<ItemTier, string> = { common: '#94A3B8', uncommon: '#38BDF8', rare: '#C084FC' }
 
 export function ShopScreen({
   theme,
@@ -25,69 +22,39 @@ export function ShopScreen({
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const items = ITEM_CATALOG.filter(i => i.themeKey === theme.key)
-
-  const grouped = TIER_ORDER.map(tier => ({
-    tier,
-    items: items.filter(i => i.tier === tier),
-  }))
-
+  const grouped = TIER_ORDER.map(tier => ({ tier, items: items.filter(i => i.tier === tier) }))
   const selectedItem = items.find(i => i.id === selectedId) ?? null
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-slate-900 max-w-sm mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/[0.07] sticky top-0 bg-slate-900/95 backdrop-blur z-10">
-        <button
-          onClick={onBack}
-          className="p-2 text-slate-400 active:text-slate-200 active:scale-90 transition-all"
-        >
-          ⬅
-        </button>
-        <div className="text-xl font-bold text-slate-100">🛒 Shop</div>
-        <div className="flex items-center gap-1 text-amber-400 font-bold">
-          <span>⭐</span>
-          <span>{availableStars}</span>
+    <div className="screen screen-enter">
+      <div className="col col-wide" style={{ paddingBottom: selectedItem ? 110 : 28, maxWidth: 720 }}>
+        <div className="row-between" style={{ marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="iconbtn" onClick={onBack}>←</button>
+            <div className="h-title" style={{ fontSize: 24 }}>🛒 Shop</div>
+          </div>
+          <div className="sess-stars" style={{ fontSize: 16 }}>⭐ {availableStars}</div>
         </div>
-      </div>
 
-      {/* Scrollable catalog */}
-      <div className="flex-1 overflow-y-auto p-4 pb-32 space-y-6">
         {grouped.map(({ tier, items: tierItems }) => (
           <div key={tier}>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-              {TIER_LABEL[tier]}
+            <div className="tier-head">
+              <div className="tier-dot" style={{ background: TIER_COLOR[tier] }} />
+              <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--fg-dim)' }}>{TIER_LABEL[tier]}</div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="shop-grid">
               {tierItems.map(item => {
                 const affordable = availableStars >= item.price
                 const isSelected = selectedId === item.id
-
                 return (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      if (!affordable) return
-                      setSelectedId(isSelected ? null : item.id)
-                    }}
-                    className={`flex flex-col items-center gap-2 rounded-2xl p-4 border-2 transition-all active:scale-95 ${
-                      isSelected
-                        ? 'bg-amber-400/15 border-amber-400'
-                        : affordable
-                        ? 'bg-slate-800 border-slate-700 hover:border-slate-600'
-                        : 'bg-slate-800/50 border-slate-800 opacity-50'
-                    }`}
+                    className={`shop-item${isSelected ? ' sel' : ''}${!affordable ? ' poor' : ''}`}
+                    onClick={() => { if (!affordable) return; setSelectedId(isSelected ? null : item.id) }}
                   >
-                    <span className="text-3xl">{item.emoji}</span>
-                    <span className={`text-xs font-semibold text-center leading-tight ${
-                      affordable ? 'text-slate-300' : 'text-slate-600'
-                    }`}>
-                      {item.name}
-                    </span>
-                    <div className={`flex items-center gap-1 text-sm font-bold rounded-full px-2 py-0.5 ${
-                      affordable
-                        ? isSelected ? 'bg-amber-400 text-slate-900' : 'bg-slate-700 text-amber-400'
-                        : 'bg-slate-800 text-slate-600'
-                    }`}>
+                    <div className="em">{item.emoji}</div>
+                    <div className="nm">{item.name}</div>
+                    <div className={`price${isSelected ? ' sel' : ''}`}>
                       {!affordable && <span>🔒</span>}
                       <span>⭐ {item.price}</span>
                     </div>
@@ -99,16 +66,18 @@ export function ShopScreen({
         ))}
       </div>
 
-      {/* Sticky place button */}
       {selectedItem && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm p-4 bg-slate-900/95 backdrop-blur border-t border-white/[0.07]">
+        <div style={{
+          position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 440, padding: 16,
+          background: 'var(--surface-glass)', backdropFilter: 'blur(16px)',
+          borderTop: '1px solid var(--border)',
+        }}>
           <button
+            className="btn-primary"
             onClick={() => { onSelectItem(selectedItem); setSelectedId(null) }}
-            className="w-full py-4 rounded-2xl bg-amber-400 text-slate-900 font-bold text-lg active:scale-95 transition-transform shadow-lg flex items-center justify-center gap-2"
           >
-            <span>{selectedItem.emoji}</span>
-            <span>Place {selectedItem.name}</span>
-            <span className="opacity-70 text-base ml-1">— ⭐ {selectedItem.price}</span>
+            {selectedItem.emoji} Place {selectedItem.name} — ⭐ {selectedItem.price}
           </button>
         </div>
       )}
