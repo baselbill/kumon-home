@@ -115,10 +115,11 @@ export function resetGame(): GameSave {
 
 // ─── Multi-profile API ────────────────────────────────────────
 
-const SAVE_VERSION = 4
+const SAVE_VERSION = 5
 
 export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
   const themeKey = (raw.themeKey as string | undefined) ?? 'dinosaurs'
+  const rawVersion = typeof raw.version === 'number' ? raw.version : 0
   const result = {
     ...DEFAULT_SAVE,
     version: SAVE_VERSION,
@@ -133,6 +134,17 @@ export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
     world: [],
     ...raw,
   } as ProfileSave
+  // v4 → v5: new "Count to 3" level inserted at position 1; all level IDs shift +1
+  if (rawVersion < 5) {
+    result.highestUnlockedLevel = (result.highestUnlockedLevel || 1) + 1
+    const oldProgress = result.levelProgress as Record<string, LevelProgress>
+    const newProgress: Record<number, LevelProgress> = {}
+    for (const [k, v] of Object.entries(oldProgress)) {
+      newProgress[Number(k) + 1] = v
+    }
+    result.levelProgress = newProgress
+  }
+  result.version = SAVE_VERSION
   // Invariant: the active theme is always owned
   if (!result.unlockedCompanions.includes(result.themeKey)) {
     result.unlockedCompanions = [result.themeKey, ...result.unlockedCompanions]
@@ -217,6 +229,7 @@ export function createProfile(
 ): ProfileSave {
   return {
     ...DEFAULT_SAVE,
+    version: SAVE_VERSION,
     highestUnlockedLevel: Math.max(1, startingLevel),
     profileId: `profile-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     profileName: name,
@@ -299,19 +312,19 @@ export const ALL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'level_5',
     name: 'Halfway Hero',
-    description: 'Reached level 5',
+    description: 'Reached level 6',
     icon: '🦁',
   },
   {
     id: 'level_10',
     name: 'Math Master',
-    description: 'Reached level 10!',
+    description: 'Reached level 11!',
     icon: '🏆',
   },
   {
     id: 'level_20',
     name: 'Math Wizard',
-    description: 'Completed all 20 levels!',
+    description: 'Completed all 21 levels!',
     icon: '🧙',
   },
   {
@@ -337,9 +350,9 @@ export function checkNewAchievements(save: GameSave): string[] {
   check('streak_7', save.streak >= 7)
   check('stars_50', save.totalStars >= 50)
   check('stars_200', save.totalStars >= 200)
-  check('level_5', save.highestUnlockedLevel >= 5)
-  check('level_10', save.highestUnlockedLevel > 10)
-  check('level_20', save.highestUnlockedLevel > 20)
+  check('level_5', save.highestUnlockedLevel >= 6)
+  check('level_10', save.highestUnlockedLevel > 11)
+  check('level_20', save.highestUnlockedLevel > 21)
   check('sessions_10', save.totalSessionsPlayed >= 10)
 
   return newOnes

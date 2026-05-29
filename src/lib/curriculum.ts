@@ -34,20 +34,34 @@ export interface Level {
 export const CURRICULUM: Level[] = [
   {
     id: 1,
+    name: 'Count to 3',
+    description: 'Count 1, 2, 3!',
+    icon: '🐣',
+    type: 'counting',
+    maxAnswer: 3,
+    maxOperand: 3,
+    showDots: true,
+    problemsPerSession: 20,
+    masteryThreshold: 0.9,
+    color: '#F97316', // arc L1: orange (warm start)
+    unlockMessage: 'You can count to 3!',
+  },
+  {
+    id: 2,
     name: 'Count to 5',
     description: 'Count the dots!',
-    icon: '🐣',
+    icon: '🐤',
     type: 'counting',
     maxAnswer: 5,
     maxOperand: 5,
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#F97316', // arc L1: orange (warm start)
+    color: '#FB923C', // arc L2: orange-amber
     unlockMessage: 'You can count to 5! Amazing!',
   },
   {
-    id: 2,
+    id: 3,
     name: 'Count to 10',
     description: 'Count the dots up to 10!',
     icon: '🐥',
@@ -57,11 +71,11 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#FB923C', // arc L2: orange-amber
+    color: '#F59E0B', // arc L3: amber
     unlockMessage: 'You can count to 10! Keep going!',
   },
   {
-    id: 3,
+    id: 4,
     name: 'Add to 5',
     description: 'Add two small numbers!',
     icon: '🐇',
@@ -71,11 +85,11 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#F59E0B', // arc L3: amber
+    color: '#EAB308', // arc L4: yellow-amber
     unlockMessage: 'You can add to 5! Incredible!',
   },
   {
-    id: 4,
+    id: 5,
     name: 'Add to 10',
     description: 'Add numbers up to 10!',
     icon: '🦊',
@@ -85,11 +99,11 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#EAB308', // arc L4: yellow-amber
+    color: '#84CC16', // arc L5: lime (warm→nature transition)
     unlockMessage: "Adding to 10 is easy for you!",
   },
   {
-    id: 5,
+    id: 6,
     name: 'Add to 10 (fast!)',
     description: 'Add to 10 without dots!',
     icon: '🦁',
@@ -99,11 +113,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#84CC16', // arc L5: lime (warm→nature transition)
+    color: '#22C55E', // arc L6: green
     unlockMessage: 'Super fast adding! You rock!',
   },
   {
-    id: 6,
+    id: 7,
     name: 'Add to 20',
     description: 'Add bigger numbers!',
     icon: '🐯',
@@ -113,11 +127,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#22C55E', // arc L6: green
+    color: '#10B981', // arc L7: emerald
     unlockMessage: 'Adding to 20! You are a math star!',
   },
   {
-    id: 7,
+    id: 8,
     name: 'Subtract from 5',
     description: 'Take away from small numbers!',
     icon: '🐸',
@@ -127,11 +141,11 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#10B981', // arc L7: emerald
+    color: '#14B8A6', // arc L8: teal
     unlockMessage: 'Subtraction from 5 — nailed it!',
   },
   {
-    id: 8,
+    id: 9,
     name: 'Subtract from 10',
     description: 'Take away from 10!',
     icon: '🦋',
@@ -141,11 +155,11 @@ export const CURRICULUM: Level[] = [
     showDots: true,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#14B8A6', // arc L8: teal
+    color: '#06B6D4', // arc L9: cyan
     unlockMessage: 'Subtraction hero! Amazing work!',
   },
   {
-    id: 9,
+    id: 10,
     name: 'Subtract from 20',
     description: 'Take away from bigger numbers!',
     icon: '🦅',
@@ -155,11 +169,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#06B6D4', // arc L9: cyan
+    color: '#0EA5E9', // arc L10: sky
     unlockMessage: 'Subtracting from 20! Wow!',
   },
   {
-    id: 10,
+    id: 11,
     name: 'Math Master',
     description: 'Mix of adding and taking away!',
     icon: '🏆',
@@ -169,14 +183,14 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#0EA5E9', // arc L10: sky (nature→cool transition)
+    color: '#3B82F6', // arc L11: blue (nature→cool transition)
     unlockMessage: 'YOU ARE A MATH MASTER! 🏆',
   },
 
   // ── Phase 1: Multiplication & division ──────────────────────────────────────
 
   {
-    id: 11,
+    id: 12,
     name: 'Multiply by 2, 5, 10',
     description: 'The easiest times tables!',
     icon: '⚡',
@@ -187,11 +201,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#3B82F6', // arc L11: blue
+    color: '#6366F1', // arc L12: indigo
     unlockMessage: 'Times tables — off to a flying start! ⚡',
   },
   {
-    id: 12,
+    id: 13,
     name: 'Multiply by 3 & 4',
     description: 'More times tables!',
     icon: '🔢',
@@ -202,11 +216,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#6366F1', // arc L12: indigo
+    color: '#8B5CF6', // arc L13: violet
     unlockMessage: '×3 and ×4 mastered — nice work!',
   },
   {
-    id: 13,
+    id: 14,
     name: 'Times Tables',
     description: 'All times tables up to 12!',
     icon: '✖️',
@@ -216,11 +230,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#8B5CF6', // arc L13: violet
+    color: '#7C3AED', // arc L14: purple-violet
     unlockMessage: 'Full times tables — you nailed it! 🌟',
   },
   {
-    id: 14,
+    id: 15,
     name: 'Division',
     description: 'Split numbers equally!',
     icon: '➗',
@@ -230,11 +244,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#7C3AED', // arc L14: purple-violet
+    color: '#A855F7', // arc L15: purple
     unlockMessage: "Division pro — you're on a roll!",
   },
   {
-    id: 15,
+    id: 16,
     name: 'Bigger Multiply',
     description: 'Multiply larger numbers!',
     icon: '💥',
@@ -244,11 +258,14 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#A855F7', // arc L15: purple
+    color: '#9333EA', // arc L16: deep purple
     unlockMessage: 'Big multiplication — absolutely crushed it!',
   },
+
+  // ── Phase 1: Higher concepts (integer answers) ───────────────────────────────
+
   {
-    id: 16,
+    id: 17,
     name: 'Long Division',
     description: 'Divide bigger numbers!',
     icon: '📐',
@@ -258,14 +275,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#9333EA', // arc L16: deep purple
+    color: '#6D28D9', // arc L17: deeper violet
     unlockMessage: "Long division solved! You've got this!",
   },
-
-  // ── Phase 1: Higher concepts (integer answers) ───────────────────────────────
-
   {
-    id: 17,
+    id: 18,
     name: 'Powers',
     description: 'Numbers raised to a power!',
     icon: '⬆️',
@@ -275,11 +289,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#6D28D9', // arc L17: deeper violet
+    color: '#4C1D95', // arc L18: very deep violet
     unlockMessage: 'To the power of AMAZING!',
   },
   {
-    id: 18,
+    id: 19,
     name: 'Square Roots',
     description: 'Find the square root!',
     icon: '√',
@@ -289,11 +303,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#4C1D95', // arc L18: very deep violet
+    color: '#3730A3', // arc L19: dark indigo
     unlockMessage: 'Square roots — rooted in success! 🌱',
   },
   {
-    id: 19,
+    id: 20,
     name: 'Percentages',
     description: 'Find percentages of numbers!',
     icon: '%',
@@ -303,11 +317,11 @@ export const CURRICULUM: Level[] = [
     showDots: false,
     problemsPerSession: 20,
     masteryThreshold: 0.9,
-    color: '#3730A3', // arc L19: dark indigo
+    color: '#1E40AF', // arc L20: deep blue
     unlockMessage: 'Percentage pro! Nothing can stop you!',
   },
   {
-    id: 20,
+    id: 21,
     name: 'Algebra',
     description: 'Solve for the mystery number!',
     icon: '🔍',
@@ -331,36 +345,37 @@ export const TOTAL_LEVELS = CURRICULUM.length
 /**
  * Map a child's age to an appropriate starting highestUnlockedLevel.
  * Conservative by one level so the first session is a confidence builder,
- * not a wall. Ages 10+ map to level 10 (Math Master) — the full curriculum
- * is unlocked and they begin at the top.
+ * not a wall.
  *
  * Age → Level
- *  ≤4 → 1  (Count to 5)
- *   5 → 2  (Count to 10)
- *   6 → 3  (Add to 5)
- *   7 → 5  (Add to 10 — fast, no dots)
- *   8 → 7  (Subtract from 5)
- *   9 → 9  (Subtract from 20)
- *  10 → 10 (Math Master)
- *  11 → 11 (Multiply by 2, 5, 10)
- *  12 → 13 (Times Tables — assumes basic ×2/5/10 known)
- *  13 → 15 (Bigger Multiply)
- *  14 → 17 (Powers)
- *  15 → 19 (Percentages)
- *  16+ → 20 (Algebra — full curriculum accessible)
+ *  ≤3 → 1  (Count to 3)
+ *   4 → 2  (Count to 5)
+ *   5 → 3  (Count to 10)
+ *   6 → 4  (Add to 5)
+ *   7 → 6  (Add to 10 — fast, no dots)
+ *   8 → 8  (Subtract from 5)
+ *   9 → 10 (Subtract from 20)
+ *  10 → 11 (Math Master)
+ *  11 → 12 (Multiply by 2, 5, 10)
+ *  12 → 14 (Times Tables — assumes basic ×2/5/10 known)
+ *  13 → 16 (Bigger Multiply)
+ *  14 → 18 (Powers)
+ *  15 → 20 (Percentages)
+ *  16+ → 21 (Algebra — full curriculum accessible)
  */
 export function getStartingLevel(age: number): number {
-  if (age <= 4) return 1
-  if (age === 5) return 2
-  if (age === 6) return 3
-  if (age === 7) return 5
-  if (age === 8) return 7
-  if (age === 9) return 9
-  if (age === 10) return 10
-  if (age === 11) return 11
-  if (age === 12) return 13
-  if (age === 13) return 15
-  if (age === 14) return 17
-  if (age === 15) return 19
-  return 20
+  if (age <= 3) return 1
+  if (age === 4) return 2
+  if (age === 5) return 3
+  if (age === 6) return 4
+  if (age === 7) return 6
+  if (age === 8) return 8
+  if (age === 9) return 10
+  if (age === 10) return 11
+  if (age === 11) return 12
+  if (age === 12) return 14
+  if (age === 13) return 16
+  if (age === 14) return 18
+  if (age === 15) return 20
+  return 21
 }

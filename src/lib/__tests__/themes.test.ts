@@ -43,11 +43,11 @@ describe('ThemeLocation', () => {
     }
   })
 
-  it('all location ranges cover 1–20 contiguously with no gaps or overlaps', () => {
+  it('all location ranges cover 1–21 contiguously with no gaps or overlaps', () => {
     for (const theme of PRESET_THEMES) {
       const sorted = [...theme.locations].sort((a, b) => a.levelRange[0] - b.levelRange[0])
       expect(sorted[0].levelRange[0]).toBe(1)
-      expect(sorted[3].levelRange[1]).toBe(20)
+      expect(sorted[3].levelRange[1]).toBe(21)
       for (let i = 0; i < sorted.length - 1; i++) {
         expect(sorted[i].levelRange[1] + 1).toBe(sorted[i + 1].levelRange[0])
       }
@@ -74,26 +74,26 @@ describe('getLocationForLevel', () => {
     expect(getLocationForLevel(dino, 1).levelRange[0]).toBe(1)
     expect(getLocationForLevel(dino, 5).levelRange[1]).toBe(5)
     expect(getLocationForLevel(dino, 6).levelRange[0]).toBe(6)
-    expect(getLocationForLevel(dino, 10).levelRange[1]).toBe(10)
-    expect(getLocationForLevel(dino, 11).levelRange[0]).toBe(11)
-    expect(getLocationForLevel(dino, 15).levelRange[1]).toBe(15)
-    expect(getLocationForLevel(dino, 16).levelRange[0]).toBe(16)
-    expect(getLocationForLevel(dino, 20).levelRange[1]).toBe(20)
+    expect(getLocationForLevel(dino, 11).levelRange[1]).toBe(11)
+    expect(getLocationForLevel(dino, 12).levelRange[0]).toBe(12)
+    expect(getLocationForLevel(dino, 16).levelRange[1]).toBe(16)
+    expect(getLocationForLevel(dino, 17).levelRange[0]).toBe(17)
+    expect(getLocationForLevel(dino, 21).levelRange[1]).toBe(21)
   })
 
   it('boundaries return different locations on each side', () => {
     expect(getLocationForLevel(dino, 5).name).not.toBe(getLocationForLevel(dino, 6).name)
-    expect(getLocationForLevel(dino, 10).name).not.toBe(getLocationForLevel(dino, 11).name)
-    expect(getLocationForLevel(dino, 15).name).not.toBe(getLocationForLevel(dino, 16).name)
+    expect(getLocationForLevel(dino, 11).name).not.toBe(getLocationForLevel(dino, 12).name)
+    expect(getLocationForLevel(dino, 16).name).not.toBe(getLocationForLevel(dino, 17).name)
   })
 
   it('works correctly for all 7 themes', () => {
     for (const theme of PRESET_THEMES) {
       expect(getLocationForLevel(theme, 1).levelRange[0]).toBe(1)
-      expect(getLocationForLevel(theme, 20).levelRange[1]).toBe(20)
+      expect(getLocationForLevel(theme, 21).levelRange[1]).toBe(21)
       // mid-tier level should not be the first or last location
       expect(getLocationForLevel(theme, 8).levelRange[0]).toBeGreaterThan(1)
-      expect(getLocationForLevel(theme, 13).levelRange[1]).toBeLessThan(20)
+      expect(getLocationForLevel(theme, 14).levelRange[1]).toBeLessThan(21)
     }
   })
 })
