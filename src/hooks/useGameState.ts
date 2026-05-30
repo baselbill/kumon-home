@@ -252,7 +252,7 @@ export function useGameState() {
       const total = level.problemsPerSession
       const mastered = finalCorrect / total >= level.masteryThreshold
       const isPerfect = finalCorrect === total
-      const starsEarned = finalCorrect + (isPerfect ? 5 : 0)
+      const baseStars = finalCorrect + (isPerfect ? 5 : 0)
 
       // ── Adaptive analysis on final 10 of session ──────────
       const attempts = sessionAttemptsRef.current
@@ -298,6 +298,7 @@ export function useGameState() {
       let collectedNewAchIds: string[] = []
       let collectedEvolution: number | null = null
       let collectedCompanionUnlocks: string[] = []
+      let collectedStarsEarned: number = baseStars
 
       setProfiles(prev => {
         const idx = prev.findIndex(p => p.profileId === activeProfileId)
@@ -332,6 +333,10 @@ export function useGameState() {
         const newHighest = mastered
           ? Math.max(prof.highestUnlockedLevel, level.id + 1)
           : prof.highestUnlockedLevel
+
+        // Apply 50% star reduction if replaying a previously mastered level
+        const starsEarned = existing.completed ? Math.floor(baseStars * 0.5) : baseStars
+        collectedStarsEarned = starsEarned
 
         let updated: ProfileSave = {
           ...prof,
@@ -447,7 +452,7 @@ export function useGameState() {
         total,
         mastered,
         isPerfect,
-        starsEarned,
+        starsEarned: collectedStarsEarned,
         newAchievements: collectedNewAchIds,
         adaptiveBanner,
         durationMs,
