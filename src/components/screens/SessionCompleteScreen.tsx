@@ -130,7 +130,7 @@ export function SessionCompleteScreen({
             {/* Struggle-aware re-teach: re-open the concept intro for this level */}
             {onReviewLesson && (
               <button className="btn-primary" style={{ width: '100%' }} onClick={onReviewLesson}>
-                📖 Learn it again
+                Learn it again →
               </button>
             )}
             <div style={{ display: 'flex', gap: 12, width: '100%' }}>

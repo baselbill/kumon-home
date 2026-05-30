@@ -26,9 +26,18 @@ export function LessonVisual({
     return (
       <div
         className="equation"
-        style={{ marginTop: 16, fontWeight: 900, color: 'var(--fg)' }}
+        style={{ marginTop: 16 }}
       >
-        <span className="num-big" style={{ fontSize: 'clamp(38px, 9vw, 58px)' }}>
+        <span
+          style={{
+            fontSize: 'clamp(42px, 10vw, 64px)',
+            fontWeight: 900,
+            color: 'var(--fg)',
+            fontVariantNumeric: 'tabular-nums',
+            lineHeight: 1,
+            letterSpacing: '-0.5px',
+          }}
+        >
           {visual.text}
         </span>
       </div>

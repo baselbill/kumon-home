@@ -5,6 +5,7 @@ import { Level } from '@/lib/curriculum'
 import { Theme } from '@/lib/themes'
 import { getLessonForLevel } from '@/lib/lessons'
 import { LessonVisual } from '@/components/shared/LessonVisual'
+import { Mascot } from '@/components/shared/Mascot'
 
 /**
  * Concept-intro carousel shown before a child's first session on a level that
@@ -15,11 +16,13 @@ import { LessonVisual } from '@/components/shared/LessonVisual'
 export function LessonIntroScreen({
   level,
   theme,
+  companionStage,
   onStart,
   onExit,
 }: {
   level: Level
   theme: Theme
+  companionStage: number
   onStart: () => void
   onExit: () => void
 }) {
@@ -49,7 +52,12 @@ export function LessonIntroScreen({
         </div>
 
         {/* Step progress dots */}
-        <div className="flex gap-1 justify-center" style={{ marginTop: 12 }}>
+        <div
+          className="flex gap-1 justify-center"
+          role="status"
+          aria-label={`Step ${stepIndex + 1} of ${lesson.steps.length}`}
+          style={{ marginTop: 12 }}
+        >
           {lesson.steps.map((_, i) => (
             <div
               key={i}
@@ -66,38 +74,49 @@ export function LessonIntroScreen({
 
         {/* Lesson card */}
         <div className="problem-card bounce-in" style={{ marginTop: 16, textAlign: 'center' }} key={stepIndex}>
+          <div style={{ marginBottom: 10 }}>
+            <Mascot
+              mood={isLast ? 'happy' : 'idle'}
+              theme={theme}
+              companionStage={companionStage}
+            />
+          </div>
           <div className="label" style={{ marginBottom: 8 }}>
             Learn it · Step {stepIndex + 1} of {lesson.steps.length}
           </div>
           <div className="h-title" style={{ fontSize: 22 }}>{step.title}</div>
-          <div className="narration" style={{ fontSize: 17, marginTop: 10 }}>{step.body}</div>
+          <div className="narration" style={{ fontSize: 19, marginTop: 10 }}>{step.body}</div>
           {step.visual && <LessonVisual visual={step.visual} theme={theme} />}
         </div>
 
-        {/* Navigation */}
+        {/* Navigation — left slot always reserved so Next never shifts position */}
         <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 20 }}>
-          {!isFirst && (
-            <button
-              className="btn-ghost"
-              style={{ flex: 1, textAlign: 'center' }}
-              onClick={() => setStepIndex(i => Math.max(0, i - 1))}
-            >
-              ← Back
-            </button>
-          )}
-          {isLast ? (
-            <button className="btn-primary" style={{ flex: 2 }} onClick={onStart}>
-              Let&apos;s try! →
-            </button>
-          ) : (
-            <button
-              className="btn-primary"
-              style={{ flex: 2 }}
-              onClick={() => setStepIndex(i => Math.min(lesson.steps.length - 1, i + 1))}
-            >
-              Next →
-            </button>
-          )}
+          <div style={{ flex: 1 }}>
+            {!isFirst && (
+              <button
+                className="btn-ghost"
+                style={{ width: '100%', textAlign: 'center' }}
+                onClick={() => setStepIndex(i => Math.max(0, i - 1))}
+              >
+                ← Back
+              </button>
+            )}
+          </div>
+          <div style={{ flex: 2 }}>
+            {isLast ? (
+              <button className="btn-primary" style={{ width: '100%' }} onClick={onStart}>
+                Let&apos;s try! →
+              </button>
+            ) : (
+              <button
+                className="btn-primary"
+                style={{ width: '100%' }}
+                onClick={() => setStepIndex(i => Math.min(lesson.steps.length - 1, i + 1))}
+              >
+                Next →
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

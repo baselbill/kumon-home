@@ -320,6 +320,7 @@ export default function MathGame() {
         <LessonIntroScreen
           level={getLevelById(pendingLevelId)!}
           theme={theme}
+          companionStage={companionStage}
           onStart={() => {
             const levelId = pendingLevelId
             const seen = activeProfile.seenIntros ?? []
