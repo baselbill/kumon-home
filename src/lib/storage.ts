@@ -66,6 +66,7 @@ export interface ProfileSave extends GameSave {
   unlockedCompanions: string[] // theme keys owned
   spentStars: number           // stars spent in the shop; balance = totalStars - spentStars
   world: PlacedItem[]          // items placed in the 6×6 world grid
+  seenIntros: number[]         // level IDs whose concept-intro lesson has been shown
 }
 
 const SAVE_KEY = 'kumon_home_v1'
@@ -132,6 +133,7 @@ export function migrateProfile(raw: Record<string, unknown>): ProfileSave {
     unlockedCompanions: [themeKey],
     spentStars: 0,
     world: [],
+    seenIntros: [],
     ...raw,
   } as ProfileSave
   // v4 → v5: new "Count to 3" level inserted at position 1; all level IDs shift +1
@@ -240,6 +242,7 @@ export function createProfile(
     unlockedCompanions: [themeKey],
     spentStars: 0,
     world: [],
+    seenIntros: [],
   }
 }
 

@@ -24,6 +24,8 @@ import { HomeScreen } from '@/components/screens/HomeScreen'
 import { LevelSelectScreen } from '@/components/screens/LevelSelectScreen'
 import { AchievementsScreen } from '@/components/screens/AchievementsScreen'
 import { GameScreen } from '@/components/screens/GameScreen'
+import { LessonIntroScreen } from '@/components/screens/LessonIntroScreen'
+import { getLessonForLevel } from '@/lib/lessons'
 import { SessionCompleteScreen } from '@/components/screens/SessionCompleteScreen'
 import { LevelCompleteScreen } from '@/components/screens/LevelCompleteScreen'
 import { WorldScreen } from '@/components/screens/WorldScreen'
@@ -104,6 +106,27 @@ export default function MathGame() {
   const [editingProfile, setEditingProfile] = useState<ProfileSave | null>(null)
   const [pendingWorldItem, setPendingWorldItem] = useState<CatalogItem | null>(null)
   const [parentViewingProfileId, setParentViewingProfileId] = useState<string | null>(null)
+  // Level awaiting its concept-intro lesson before practice starts.
+  const [pendingLevelId, setPendingLevelId] = useState<number | null>(null)
+
+  // ── Begin a level: show the concept intro the first time, else play ───
+  const beginLevel = useCallback((levelId: number) => {
+    const lesson = getLessonForLevel(levelId, theme)
+    const seen = activeProfile?.seenIntros ?? []
+    if (lesson && !seen.includes(levelId)) {
+      setPendingLevelId(levelId)
+      setScreen('lesson-intro')
+    } else {
+      startSession(levelId)
+      setScreen('playing')
+    }
+  }, [theme, activeProfile, startSession])
+
+  // ── Reopen a concept intro on demand (e.g. "Learn it again") ──────────
+  const reviewLesson = useCallback((levelId: number) => {
+    setPendingLevelId(levelId)
+    setScreen('lesson-intro')
+  }, [])
 
   // ── Transition to session-complete when hook sets sessionResult ───
   useEffect(() => {
@@ -242,8 +265,7 @@ export default function MathGame() {
           availableStars={availableStars}
           onPlay={() => {
             const lvl = Math.min(activeProfile.highestUnlockedLevel, TOTAL_LEVELS)
-            startSession(lvl)
-            setScreen('playing')
+            beginLevel(lvl)
           }}
           onSwitchProfile={id => switchProfile(id)}
           onAddProfile={() => setSubScreen('profile-create')}
@@ -266,7 +288,7 @@ export default function MathGame() {
         <LevelSelectScreen
           activeProfile={activeProfile}
           theme={theme}
-          onSelect={(id) => { startSession(id); setScreen('playing') }}
+          onSelect={(id) => beginLevel(id)}
           onBack={() => setScreen('home')}
         />
       )}
@@ -290,6 +312,28 @@ export default function MathGame() {
           onBackspace={handleBackspace}
           onSubmit={handleSubmit}
           onQuit={() => { setScreen('home'); setSubScreen('none') }}
+        />
+      )}
+
+      {/* ── Lesson Intro (concept launch before practice) ── */}
+      {screen === 'lesson-intro' && pendingLevelId !== null && getLevelById(pendingLevelId) && (
+        <LessonIntroScreen
+          level={getLevelById(pendingLevelId)!}
+          theme={theme}
+          onStart={() => {
+            const levelId = pendingLevelId
+            const seen = activeProfile.seenIntros ?? []
+            if (!seen.includes(levelId)) {
+              updateProfile(activeProfileId, prev => ({
+                ...prev,
+                seenIntros: [...(prev.seenIntros ?? []), levelId],
+              }))
+            }
+            startSession(levelId)
+            setPendingLevelId(null)
+            setScreen('playing')
+          }}
+          onExit={() => { setPendingLevelId(null); setScreen('home'); setSubScreen('none') }}
         />
       )}
 
@@ -318,12 +362,14 @@ export default function MathGame() {
             const nextId = activeLevelId + 1
             const nextLevel = getLevelById(nextId)
             if (nextLevel) {
-              startSession(nextId)
-              setScreen('playing')
+              beginLevel(nextId)
             } else {
               setScreen('home')
             }
           }}
+          onReviewLesson={
+            getLessonForLevel(activeLevelId, theme) ? () => reviewLesson(activeLevelId) : undefined
+          }
         />
       )}
 
@@ -337,8 +383,7 @@ export default function MathGame() {
             const nextId = activeLevelId + 1
             const nextLevel = getLevelById(nextId)
             if (nextLevel) {
-              startSession(nextId)
-              setScreen('playing')
+              beginLevel(nextId)
             } else {
               setScreen('home')
               setSubScreen('none')

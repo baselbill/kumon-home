@@ -1,7 +1,7 @@
 import { Problem } from '@/lib/problems'
 
 export type Screen =
-  | 'home' | 'level-select' | 'achievements' | 'playing'
+  | 'home' | 'level-select' | 'achievements' | 'playing' | 'lesson-intro'
   | 'session-complete' | 'level-complete' | 'world' | 'shop'
   | 'parent-pin' | 'parent-pin-set' | 'parent-dashboard' | 'parent-progress' | 'parent-settings'
 export type SubScreen = 'none' | 'achievements' | 'profile-create' | 'profile-edit'

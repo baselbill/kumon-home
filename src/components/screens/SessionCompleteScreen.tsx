@@ -42,6 +42,7 @@ export function SessionCompleteScreen({
   onContinue,
   onRetry,
   onNextLevel,
+  onReviewLesson,
 }: {
   result: SessionResult
   level: Level
@@ -49,6 +50,7 @@ export function SessionCompleteScreen({
   onContinue: () => void
   onRetry: () => void
   onNextLevel: () => void
+  onReviewLesson?: () => void
 }) {
   const speed = result.durationMs > 0 ? speedTier(result.avgResponseMs) : null
 
@@ -124,10 +126,18 @@ export function SessionCompleteScreen({
         {result.mastered ? (
           <button className="btn-primary" onClick={onContinue}>Next Level! →</button>
         ) : (
-          <div style={{ display: 'flex', gap: 12, width: '100%' }}>
-            <button className="btn-ghost" style={{ flex: 1, textAlign: 'center' }} onClick={onRetry}>Try Again</button>
-            <button className="btn-ghost" style={{ flex: 1, textAlign: 'center' }} onClick={onContinue}>Home</button>
-          </div>
+          <>
+            {/* Struggle-aware re-teach: re-open the concept intro for this level */}
+            {onReviewLesson && (
+              <button className="btn-primary" style={{ width: '100%' }} onClick={onReviewLesson}>
+                📖 Learn it again
+              </button>
+            )}
+            <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+              <button className="btn-ghost" style={{ flex: 1, textAlign: 'center' }} onClick={onRetry}>Try Again</button>
+              <button className="btn-ghost" style={{ flex: 1, textAlign: 'center' }} onClick={onContinue}>Home</button>
+            </div>
+          </>
         )}
       </div>
     </div>
